@@ -1,23 +1,17 @@
 Current priorities:
 
-1. Keep the canaries honest
+1. Evidence-led engine work
 
-- Mixed app text is exact again in the maintained Chrome/Safari step10 sweeps; keep it as a product-shaped regression canary rather than an active tuning target.
-- Chinese is still the clearest active CJK canary: Safari's step10 sweep is clean, while Chrome keeps a broader narrow-width positive field with real font sensitivity.
-- Myanmar and Urdu remain useful shaping/context canaries, but they are not the active tuning target right now.
+- Use the split `analyze()` / `measure()` benchmark rows to steer `prepare()` work and the chunk-heavy rich rows to steer streaming work.
+- Use the synthetic long-breakable-run canary for Safari prefix-width changes; retained-heap wins are not worth a meaningful `prepare()` regression.
+- Chinese is the clearest active CJK canary. Treat strongly font- or shaping-sensitive fields in Chinese, Myanmar, and Urdu as architecture boundaries until broader evidence points to a real rule.
+- Keep `layout()` simple and allocation-light. Rich/manual performance work belongs in the range and cursor APIs.
 
-2. Next engine work
+2. Canary coverage
 
-- Use the split `analyze()` / `measure()` benchmark rows to steer any remaining `prepare()` work, and use the chunk-heavy rich benchmark rows to steer `layoutNextLine()` work, instead of reopening generic profiling.
-- Use the synthetic long-breakable-run canary to steer any Safari prefix-width work; naive cache-space cleanups there can trade retained heap for meaningfully slower `prepare()`.
-- Expand mixed app text only when it adds a real product-shaped class, e.g. URL/query runs, mixed bidi with numbers, emoji ZWJ runs, or `NBSP` / `ZWSP` / `WJ` behavior.
-- Broaden canaries only when the source text is clean.
-- If we add another Southeast Asian canary, prefer a clean source text that broadens the class instead of another wrapped/legal/raw-source artifact.
-- Expand the sampled font matrix only where a canary still looks genuinely imperfect.
-- Treat strongly font-sensitive or shaping-sensitive misses as boundary-finding for the current architecture, not automatic invitations for another local glue rule.
-- Keep the height-only `layout()` path simple and allocation-light, and use the rich/manual benchmarks to steer range/cursor layout work.
-- The duplicate public streaming chunk lookup was removed in 3757fa0; only revisit a stateful streaming variant or cursor-carried chunk hint if the remaining single lookup per emitted line shows up in the chunk-heavy benchmark.
-- If arbitrary interior rich cursors become common, consider a compact `segmentIndex -> chunkIndex` side table, ideally only on rich prepared handles or only when `chunks.length > 1`.
+- Keep mixed app text as the product-shaped regression canary. Add only real classes that the current corpus misses.
+- Add corpora only from clean source text, and expand the font matrix only around a genuinely imperfect canary.
+- Prefer a new Southeast Asian source that broadens coverage over another wrapped legal or raw-source artifact.
 
 3. Demo work
 
@@ -25,16 +19,7 @@ Current priorities:
 - Prefer `layoutNextLine()` / `walkLineRanges()` when a demo is really about streaming or obstacle-aware layout.
 - Add a new demo only if it exposes something the current editorial demos do not already cover.
 
-Not worth doing right now:
-
-- Do not chase universal exactness as the product claim.
-- Do not put measurement back in `layout()`.
-- Do not resurrect dirty corpora just to cover another language.
-- Do not overfit one-line misses in one browser/corpus without broader evidence.
-- Do not let browser-profile shims turn into a grab bag of ad hoc engine knobs.
-- Do not explode the public API with cache or engine knobs.
-
-Still-open design questions:
+Open design questions:
 
 - Whether line-fit tolerance should stay as a browser shim or move toward runtime calibration.
 - Whether `{ whiteSpace: 'pre-wrap' }` should grow beyond spaces / tabs / `\n`.

@@ -1,17 +1,15 @@
 ## Personal Thoughts, In No Particular Order
 
-- My personal desire is to see end-developers being empowered to make all the layouts that makes UI more expressive, without sacrificing maintainability & performance, and without having to wait for permissions from the web committee. The current UI stereotypes across all platforms has been either:
+- My personal desire is to see end-developers empowered to make layouts that make UI more expressive, without sacrificing maintainability & performance or waiting for permission from the web committee. The current UI stereotypes across all platforms have been one of:
   - a landing-page with few, floating text chunks, powered by GL
   - a blog article with mostly just text and no possible interactivity
   - a SaaS dashboard
   - a mobile UI with 2-3 rectangles' worth of UI
 
-- If you dig deep enough, 80% of CSS spec could be avoided if userland had better control over text. The paradigm of web layout shoves our text into a single-direction black hole, and to crawl those text metrics back incurs huge maintenance and performance overhead (ask AI about this).
+- If you dig deep enough, 80% of CSS spec could be avoided if userland had better control over text. Web layout shoves text into a single-direction black hole, and crawling those metrics back out incurs huge maintenance and performance overhead.
 
-- The convenience angle of CSS is gradually being eroded by the fact that:
-  - the more CSS expressivity we bake in, the worse the CSS perf becomes (against all wishes from everyone on the committee and userland), and "programming" in CSS (as opposed to just "declare things" in CSS) is something very few desire
-  - AI alleviates the need of having more hard-coded CSS configs, which are becoming more dictionary-like rather compositional.
+- The convenience angle of CSS is gradually being eroded: more expressivity tends to mean worse performance and more "programming" in a language few people want to program in. AI also reduces the value of hard-coded CSS configs that are more dictionary-like than compositional.
 
-- It's very hard to have new competing web browser implementations, because the specs are gigantic, and many engines (grassroot efforts, gamers-driven rewrites, languages-driven rewrites, etc.) eagerly chase & premature perf improvements before realizing that the specs, often written decades ago and disregarding modern perf & feature needs,  throw a wrench in those architectures. As a first approximation, UI performance & developer ergonomics _cannot_ possibly have an order of magnitude improvement, because the bottleneck is in the specs themselves. The only way to circumvent this is to bring more capabilities to userland, in a hope to stop the spec from over-growing even more in the future. Stopping spec complexity is something every browser vendor can agree on (and ironically, sometime for completely opposing reasons).
+- New competing browser implementations are very hard because the specs are gigantic. Engines chase architectural and performance improvements before discovering that decades of spec obligations throw a wrench in them. As a first approximation, UI performance & developer ergonomics _cannot_ improve by an order of magnitude while the specs are the bottleneck. Bringing more capabilities to userland might at least stop that complexity from growing; every browser vendor can agree on that, sometimes for completely opposing reasons.
 
 - The cost of any verifiable software will trend toward 0
