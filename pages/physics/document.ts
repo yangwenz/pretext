@@ -16,72 +16,65 @@ ctx.scale(dpr, dpr)
 
 // --- Fonts and layout ---
 const bodyFont = '16px Georgia, "Times New Roman", serif'
-const cradleWordFont = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
 const lineHeight = 26
 const marginX = 50
 const fullWidth = W - marginX * 2
 const textStartY = 50
 
 // --- Document text prepared by pretext ---
-const documentText = `In classical mechanics, momentum is the product of mass and velocity. Newton's third law implies that the total momentum of a closed system remains constant. This principle is beautifully demonstrated by the apparatus you see here — word-balls swing on pendulums embedded within this paragraph. As they move, the text reflows around them in real time. Each line is laid out by pretext's layoutNextLine API with a width that accounts for the current ball positions. When a ball swings into a line's band, that line gets shorter to make room. The text wraps naturally around the obstacle, just as CSS would flow text around a float — except here the float is animated by a physics engine. Drag any colored word to disturb it. Watch how the surrounding paragraph reshapes itself every frame to accommodate the motion. This is the real integration: pretext handles line-breaking and text shaping, the physics engine handles forces and collisions, and they communicate through obstacle geometry each frame.`
+const documentText = `In classical mechanics, momentum is the product of mass and velocity. Newton's third law implies that the total momentum of a closed system remains constant. This principle is beautifully demonstrated by the apparatus you see here — balls swing on pendulums embedded within this paragraph. As they move, the text reflows around them in real time. Each line is laid out by pretext's layoutNextLine API with a width that accounts for the current ball positions. When a ball swings into a line's band, that line gets shorter to make room. The text wraps naturally around the obstacle, just as CSS would flow text around a float — except here the float is animated by a physics engine. Drag any ball to disturb it. Watch how the surrounding paragraph reshapes itself every frame to accommodate the motion. This is the real integration: pretext handles line-breaking and text shaping, the physics engine handles forces and collisions, and they communicate through obstacle geometry each frame.`
 
 const prepared = prepareWithSegments(documentText, bodyFont)
 
-// --- Cradle words (physics balls) measured by pretext ---
-const cradleWords = ['force', 'mass', 'speed']
-const cradleColors = ['#ff6b6b', '#48dbfb', '#feca57']
-
-ctx.font = cradleWordFont
-const wordWidths = cradleWords.map(w => ctx.measureText(w).width)
+// --- Five small balls ---
+const ballCount = 5
+const ballColors = ['#ff6b6b', '#48dbfb', '#feca57', '#ff9ff3', '#54a0ff']
+const ballRadius = 14
 
 // --- Physics world ---
 const world = createWorld({
   gravity: { x: 0, y: 0 },
   bounds: { x: marginX, y: 0, width: fullWidth, height: H },
-  iterations: 8,
-  damping: 0.995,
-  sleepThresholdVel: 0.1,
-  sleepDelay: 200,
+  iterations: 10,
+  damping: 0.9995,
+  sleepThresholdVel: 0.05,
+  sleepDelay: 300,
 })
 
-// Cradle: balls rest in the middle of the text area
-const ropeLength = 150
-const anchorY = textStartY - 30
-const cradleGravity = 400
-const ballSpacing = 160
+// Cradle geometry
+const ropeLength = 160
+const anchorY = textStartY - 20
+const cradleGravity = 500
+const ballSpacing = 34
 const cradleCenterX = W / 2
 
 type CradleBall = {
   anchor: Body
   ball: Body
-  word: string
-  width: number
   color: string
 }
 
 const cradleBalls: CradleBall[] = []
-const cradleStartX = cradleCenterX - ((cradleWords.length - 1) * ballSpacing) / 2
+const cradleStartX = cradleCenterX - ((ballCount - 1) * ballSpacing) / 2
 
-for (let i = 0; i < cradleWords.length; i++) {
-  const word = cradleWords[i]!
-  const color = cradleColors[i]!
-  const ww = wordWidths[i]!
+for (let i = 0; i < ballCount; i++) {
+  const color = ballColors[i]!
   const x = cradleStartX + i * ballSpacing
 
-  const anchor = createBody(world, '·', cradleWordFont, {
+  const anchor = createBody(world, '·', bodyFont, {
     position: { x, y: anchorY },
     mass: Infinity,
     width: 4,
     height: 4,
-    collisionGroup: 999,
+    collisionGroup: i + 100,
   })
 
-  const ball = createBody(world, word, cradleWordFont, {
+  const ball = createBody(world, '●', bodyFont, {
     position: { x, y: anchorY + ropeLength },
     mass: 5,
-    width: ww + 20,
-    height: lineHeight + 8,
-    restitution: 0.9,
+    width: ballRadius * 2,
+    height: ballRadius * 2,
+    restitution: 0.98,
     friction: 0.0,
     collisionGroup: 0,
   })
@@ -93,7 +86,7 @@ for (let i = 0; i < cradleWords.length; i++) {
     length: ropeLength,
   })
 
-  cradleBalls.push({ anchor, ball, word, width: ww, color })
+  cradleBalls.push({ anchor, ball, color })
 }
 
 // Pull left ball
@@ -113,7 +106,7 @@ canvas.addEventListener('mousedown', (e) => {
     const ball = cradleBalls[i]!.ball
     const dx = mx - ball.position.x
     const dy = my - ball.position.y
-    if (Math.abs(dx) < ball.width / 2 + 6 && Math.abs(dy) < ball.height / 2 + 6) {
+    if (dx * dx + dy * dy < (ballRadius + 8) * (ballRadius + 8)) {
       dragIdx = i
       ball.mass = Infinity
       break
@@ -165,18 +158,17 @@ function layoutAroundBalls(): PositionedLine[] {
     // Find which balls overlap this line band
     const blocked: { left: number; right: number }[] = []
     for (const cb of cradleBalls) {
-      const ballTop = cb.ball.position.y - cb.ball.height / 2
-      const ballBottom = cb.ball.position.y + cb.ball.height / 2
+      const ballTop = cb.ball.position.y - ballRadius
+      const ballBottom = cb.ball.position.y + ballRadius
       if (ballBottom > bandTop && ballTop < bandBottom) {
-        const halfW = cb.ball.width / 2
         blocked.push({
-          left: cb.ball.position.x - halfW,
-          right: cb.ball.position.x + halfW,
+          left: cb.ball.position.x - ballRadius - 4,
+          right: cb.ball.position.x + ballRadius + 4,
         })
       }
     }
 
-    // Sort blocked intervals and merge overlaps
+    // Sort and merge overlapping intervals
     blocked.sort((a, b) => a.left - b.left)
     const merged: { left: number; right: number }[] = []
     for (const b of blocked) {
@@ -188,7 +180,7 @@ function layoutAroundBalls(): PositionedLine[] {
       }
     }
 
-    // Carve available slots from the full line width
+    // Carve available slots
     const regionLeft = marginX
     const regionRight = W - marginX
     const slots: { left: number; right: number }[] = []
@@ -204,7 +196,6 @@ function layoutAroundBalls(): PositionedLine[] {
     }
 
     if (slots.length === 0) {
-      // Line fully blocked, skip
       lineTop += lineHeight
       continue
     }
@@ -220,7 +211,6 @@ function layoutAroundBalls(): PositionedLine[] {
 
     const availableWidth = bestSlot.right - bestSlot.left
     if (availableWidth < 40) {
-      // Too narrow to fit text
       lineTop += lineHeight
       continue
     }
@@ -281,48 +271,50 @@ function frame(now: number) {
 
   // --- Draw ropes ---
   for (const cb of cradleBalls) {
-    ctx.strokeStyle = cb.color + '35'
-    ctx.lineWidth = 1.2
+    ctx.strokeStyle = cb.color + '30'
+    ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(cb.anchor.position.x, cb.anchor.position.y)
     ctx.lineTo(cb.ball.position.x, cb.ball.position.y)
     ctx.stroke()
   }
 
-  // --- Draw word-balls ---
-  ctx.textBaseline = 'middle'
-  ctx.textAlign = 'center'
+  // --- Draw balls ---
   for (const cb of cradleBalls) {
     const ball = cb.ball
-    ctx.save()
-    ctx.translate(ball.position.x, ball.position.y)
-    ctx.rotate(ball.angle)
 
-    const pw = cb.width + 16
-    const ph = lineHeight + 4
-    ctx.shadowColor = cb.color + '44'
-    ctx.shadowBlur = 10
-    ctx.fillStyle = '#0e0e16'
-    ctx.strokeStyle = cb.color + '88'
+    // Glow
+    const gradient = ctx.createRadialGradient(
+      ball.position.x, ball.position.y, 0,
+      ball.position.x, ball.position.y, ballRadius + 4
+    )
+    gradient.addColorStop(0, cb.color + '33')
+    gradient.addColorStop(1, 'transparent')
+    ctx.fillStyle = gradient
+    ctx.beginPath()
+    ctx.arc(ball.position.x, ball.position.y, ballRadius + 4, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Ball
+    ctx.fillStyle = cb.color + 'cc'
+    ctx.beginPath()
+    ctx.arc(ball.position.x, ball.position.y, ballRadius, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Outline
+    ctx.strokeStyle = cb.color
     ctx.lineWidth = 1.5
     ctx.beginPath()
-    ctx.roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2)
-    ctx.fill()
+    ctx.arc(ball.position.x, ball.position.y, ballRadius, 0, Math.PI * 2)
     ctx.stroke()
-    ctx.shadowBlur = 0
-
-    ctx.font = cradleWordFont
-    ctx.fillStyle = cb.color
-    ctx.fillText(cb.word, 0, 0)
-    ctx.restore()
   }
 
   // --- Anchor bar ---
   ctx.strokeStyle = '#2a2a35'
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.moveTo(cradleStartX - 30, anchorY - 3)
-  ctx.lineTo(cradleStartX + (cradleWords.length - 1) * ballSpacing + 30, anchorY - 3)
+  ctx.moveTo(cradleStartX - 20, anchorY - 3)
+  ctx.lineTo(cradleStartX + (ballCount - 1) * ballSpacing + 20, anchorY - 3)
   ctx.stroke()
 
   ctx.fillStyle = '#444'
@@ -337,7 +329,7 @@ function frame(now: number) {
   ctx.fillStyle = '#5a5660'
   ctx.textBaseline = 'bottom'
   ctx.textAlign = 'center'
-  ctx.fillText('pretext layoutNextLine() reflows around physics bodies each frame · Drag any word-ball', W / 2, H - 10)
+  ctx.fillText('pretext layoutNextLine() reflows around physics bodies each frame · Drag any ball', W / 2, H - 10)
 
   requestAnimationFrame(frame)
 }
