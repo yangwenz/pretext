@@ -18,13 +18,16 @@ ctx.scale(dpr, dpr)
 const bodyFont = '16px Georgia, "Times New Roman", serif'
 const lineHeight = 26
 const marginX = 50
-const fullWidth = W - marginX * 2
 const textStartY = 50
 
 // --- Document text prepared by pretext ---
 const documentText = `In classical mechanics, momentum is the product of mass and velocity. Newton's third law implies that the total momentum of a closed system remains constant. This principle is beautifully demonstrated by the apparatus you see here — balls swing on pendulums embedded within this paragraph. As they move, the text reflows around them in real time. Each line is laid out by pretext's layoutNextLine API with a width that accounts for the current ball positions. When a ball swings into a line's band, that line gets shorter to make room. The text wraps naturally around the obstacle, just as CSS would flow text around a float — except here the float is animated by a physics engine. Drag any ball to disturb it. Watch how the surrounding paragraph reshapes itself every frame to accommodate the motion. This is the real integration: pretext handles line-breaking and text shaping, the physics engine handles forces and collisions, and they communicate through obstacle geometry each frame.`
 
 const prepared = prepareWithSegments(documentText, bodyFont)
+
+// Access internal widths for per-segment positioning
+const internalWidths: number[] = (prepared as any).widths
+const segments: string[] = prepared.segments
 
 // --- Five small balls ---
 const ballCount = 5
@@ -34,7 +37,7 @@ const ballRadius = 14
 // --- Physics world ---
 const world = createWorld({
   gravity: { x: 0, y: 0 },
-  bounds: { x: marginX, y: 0, width: fullWidth, height: H },
+  bounds: { x: marginX, y: 0, width: W - marginX * 2, height: H },
   iterations: 10,
   damping: 0.9995,
   sleepThresholdVel: 0.05,
@@ -143,19 +146,21 @@ function releaseDrag() {
 canvas.addEventListener('mouseup', releaseDrag)
 canvas.addEventListener('mouseleave', releaseDrag)
 
-// --- Obstacle-aware layout: reflow text around ball positions each frame ---
-type PositionedLine = { x: number; y: number; text: string; width: number }
+// --- Per-word positioned layout ---
+type PositionedWord = { text: string; x: number; y: number; width: number }
 
-function layoutAroundBalls(): PositionedLine[] {
-  const lines: PositionedLine[] = []
+function layoutAroundBalls(): PositionedWord[] {
+  const words: PositionedWord[] = []
   let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
   let lineTop = textStartY
+  const regionLeft = marginX
+  const regionRight = W - marginX
 
   while (lineTop + lineHeight < H - 30) {
     const bandTop = lineTop
     const bandBottom = lineTop + lineHeight
 
-    // Find which balls overlap this line band
+    // Find balls overlapping this line band
     const blocked: { left: number; right: number }[] = []
     for (const cb of cradleBalls) {
       const ballTop = cb.ball.position.y - ballRadius
@@ -168,7 +173,7 @@ function layoutAroundBalls(): PositionedLine[] {
       }
     }
 
-    // Sort and merge overlapping intervals
+    // Sort and merge
     blocked.sort((a, b) => a.left - b.left)
     const merged: { left: number; right: number }[] = []
     for (const b of blocked) {
@@ -181,8 +186,6 @@ function layoutAroundBalls(): PositionedLine[] {
     }
 
     // Carve available slots
-    const regionLeft = marginX
-    const regionRight = W - marginX
     const slots: { left: number; right: number }[] = []
     let slotLeft = regionLeft
     for (const b of merged) {
@@ -200,7 +203,7 @@ function layoutAroundBalls(): PositionedLine[] {
       continue
     }
 
-    // Pick the widest slot
+    // Pick widest slot
     let bestSlot = slots[0]!
     for (let i = 1; i < slots.length; i++) {
       const s = slots[i]!
@@ -218,18 +221,52 @@ function layoutAroundBalls(): PositionedLine[] {
     const line = layoutNextLine(prepared, cursor, availableWidth)
     if (line === null) break
 
-    lines.push({
-      x: bestSlot.left,
-      y: lineTop,
-      text: line.text,
-      width: line.width,
-    })
+    // Walk segments in the line's cursor range to get per-word positions
+    let x = bestSlot.left
+    let segIdx = line.start.segmentIndex
+    let gIdx = line.start.graphemeIndex
+
+    while (segIdx < line.end.segmentIndex || (segIdx === line.end.segmentIndex && gIdx < line.end.graphemeIndex)) {
+      const segText = segments[segIdx]!
+      const segWidth = internalWidths[segIdx]!
+
+      if (segIdx === line.start.segmentIndex && gIdx > 0) {
+        // Partial start segment — use canvas measurement for the slice
+        const slice = segText.slice(gIdx)
+        ctx.font = bodyFont
+        const sliceWidth = ctx.measureText(slice).width
+        if (slice.trim().length > 0) {
+          words.push({ text: slice, x, y: lineTop, width: sliceWidth })
+        }
+        x += sliceWidth
+      } else if (segIdx === line.end.segmentIndex && line.end.graphemeIndex > 0 && line.end.graphemeIndex < segText.length) {
+        // Partial end segment
+        const slice = segText.slice(0, line.end.graphemeIndex)
+        ctx.font = bodyFont
+        const sliceWidth = ctx.measureText(slice).width
+        if (slice.trim().length > 0) {
+          words.push({ text: slice, x, y: lineTop, width: sliceWidth })
+        }
+        x += sliceWidth
+      } else {
+        // Full segment
+        if (segText.trim().length > 0) {
+          words.push({ text: segText, x, y: lineTop, width: segWidth })
+        }
+        x += segWidth
+      }
+
+      segIdx++
+      gIdx = 0
+      if (segIdx > line.end.segmentIndex) break
+      if (segIdx === line.end.segmentIndex && line.end.graphemeIndex === 0) break
+    }
 
     cursor = line.end
     lineTop += lineHeight
   }
 
-  return lines
+  return words
 }
 
 // --- Render ---
@@ -257,16 +294,16 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // --- Reflow text around current ball positions ---
-  const lines = layoutAroundBalls()
+  // --- Reflow text per-word around current ball positions ---
+  const words = layoutAroundBalls()
 
-  // Draw text
+  // Draw words
   ctx.font = bodyFont
   ctx.textBaseline = 'top'
   ctx.textAlign = 'left'
   ctx.fillStyle = '#c8c4be'
-  for (const line of lines) {
-    ctx.fillText(line.text, line.x, line.y)
+  for (const w of words) {
+    ctx.fillText(w.text, w.x, w.y)
   }
 
   // --- Draw ropes ---
@@ -283,7 +320,6 @@ function frame(now: number) {
   for (const cb of cradleBalls) {
     const ball = cb.ball
 
-    // Glow
     const gradient = ctx.createRadialGradient(
       ball.position.x, ball.position.y, 0,
       ball.position.x, ball.position.y, ballRadius + 4
@@ -295,13 +331,11 @@ function frame(now: number) {
     ctx.arc(ball.position.x, ball.position.y, ballRadius + 4, 0, Math.PI * 2)
     ctx.fill()
 
-    // Ball
     ctx.fillStyle = cb.color + 'cc'
     ctx.beginPath()
     ctx.arc(ball.position.x, ball.position.y, ballRadius, 0, Math.PI * 2)
     ctx.fill()
 
-    // Outline
     ctx.strokeStyle = cb.color
     ctx.lineWidth = 1.5
     ctx.beginPath()
@@ -329,7 +363,7 @@ function frame(now: number) {
   ctx.fillStyle = '#5a5660'
   ctx.textBaseline = 'bottom'
   ctx.textAlign = 'center'
-  ctx.fillText('pretext layoutNextLine() reflows around physics bodies each frame · Drag any ball', W / 2, H - 10)
+  ctx.fillText('Per-word positioning via pretext segments · layoutNextLine() reflows around physics balls · Drag any ball', W / 2, H - 10)
 
   requestAnimationFrame(frame)
 }
