@@ -80,6 +80,22 @@ export function solveRigid(conn: RigidConnection, bodies: Body[]): number {
   b.position.x -= dx * corrB
   b.position.y -= dy * corrB
 
+  // Project velocities: remove the component along the constraint axis
+  const nx = dx / dist
+  const ny = dy / dist
+  const dvx = b.velocity.x - a.velocity.x
+  const dvy = b.velocity.y - a.velocity.y
+  const relVelAlongAxis = dvx * nx + dvy * ny
+
+  if (invMassA > 0) {
+    a.velocity.x += nx * relVelAlongAxis * (invMassA / invMassSum)
+    a.velocity.y += ny * relVelAlongAxis * (invMassA / invMassSum)
+  }
+  if (invMassB > 0) {
+    b.velocity.x -= nx * relVelAlongAxis * (invMassB / invMassSum)
+    b.velocity.y -= ny * relVelAlongAxis * (invMassB / invMassSum)
+  }
+
   return Math.abs(error)
 }
 
