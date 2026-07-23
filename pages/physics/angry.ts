@@ -23,7 +23,7 @@ const birdFont = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Helve
 let world = createWorld({
   gravity: { x: 0, y: 600 },
   bounds: { x: 0, y: 0, width: W, height: H },
-  iterations: 6,
+  iterations: 4,
   damping: 0.997,
   sleepThresholdVel: 0.4,
   sleepDelay: 90,
@@ -69,11 +69,11 @@ function buildTower() {
 
       const body = createBody(world, char, blockFont, {
         position: { x, y: rowY },
-        mass: 2,
+        mass: 1,
         width: blockSize,
         height: blockSize,
-        restitution: 0.2,
-        friction: 0.6,
+        restitution: 0.3,
+        friction: 0.4,
         collisionGroup: 0,
       })
 
@@ -87,7 +87,7 @@ function buildTower() {
           a: prevBlock.body.id,
           b: body.id,
           length: blockSize + 3,
-          breakForce: 80,
+          breakForce: 3,
         })
       }
     }
@@ -104,7 +104,7 @@ function buildTower() {
           a: blocks[prevRowStart + c]!.body.id,
           b: blocks[curRowStart + c]!.body.id,
           length: blockSize + 2,
-          breakForce: 60,
+          breakForce: 2,
         })
       }
     }
@@ -133,7 +133,7 @@ function buildTower() {
         a: blocks[blocks.length - 2]!.body.id,
         b: body.id,
         length: 20,
-        breakForce: 40,
+        breakForce: 1.5,
       })
     }
   }
@@ -146,10 +146,10 @@ function loadBird() {
 
   activeBird = createBody(world, word, birdFont, {
     position: { x: slingX, y: slingY },
-    mass: 4,
+    mass: 8,
     width: w + 8,
     height: 26,
-    restitution: 0.4,
+    restitution: 0.5,
     friction: 0.3,
     collisionGroup: 0,
   })
@@ -163,7 +163,7 @@ function reset() {
   world = createWorld({
     gravity: { x: 0, y: 600 },
     bounds: { x: 0, y: 0, width: W, height: H },
-    iterations: 6,
+    iterations: 4,
     damping: 0.997,
     sleepThresholdVel: 0.4,
     sleepDelay: 90,
@@ -230,9 +230,9 @@ canvas.addEventListener('mouseup', () => {
   // Launch: velocity is opposite of pull direction
   const dx = slingX - aimX
   const dy = slingY - aimY
-  const power = 12
+  const power = 18
 
-  activeBird.mass = 4
+  activeBird.mass = 8
   activeBird.velocity.x = dx * power
   activeBird.velocity.y = dy * power
   activeBird.sleeping = false
