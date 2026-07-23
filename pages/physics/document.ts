@@ -203,66 +203,57 @@ function layoutAroundBalls(): PositionedWord[] {
       continue
     }
 
-    // Pick widest slot
-    let bestSlot = slots[0]!
-    for (let i = 1; i < slots.length; i++) {
-      const s = slots[i]!
-      if (s.right - s.left > bestSlot.right - bestSlot.left) {
-        bestSlot = s
-      }
-    }
+    // Fill ALL slots on this line (left to right)
+    let done = false
+    for (const slot of slots) {
+      const slotWidth = slot.right - slot.left
+      if (slotWidth < 30) continue
 
-    const availableWidth = bestSlot.right - bestSlot.left
-    if (availableWidth < 40) {
-      lineTop += lineHeight
-      continue
-    }
+      const line = layoutNextLine(prepared, cursor, slotWidth)
+      if (line === null) { done = true; break }
 
-    const line = layoutNextLine(prepared, cursor, availableWidth)
-    if (line === null) break
+      // Walk segments to emit per-word positions
+      let x = slot.left
+      let segIdx = line.start.segmentIndex
+      let gIdx = line.start.graphemeIndex
 
-    // Walk segments in the line's cursor range to get per-word positions
-    let x = bestSlot.left
-    let segIdx = line.start.segmentIndex
-    let gIdx = line.start.graphemeIndex
+      while (segIdx < line.end.segmentIndex || (segIdx === line.end.segmentIndex && gIdx < line.end.graphemeIndex)) {
+        const segText = segments[segIdx]!
+        const segWidth = internalWidths[segIdx]!
 
-    while (segIdx < line.end.segmentIndex || (segIdx === line.end.segmentIndex && gIdx < line.end.graphemeIndex)) {
-      const segText = segments[segIdx]!
-      const segWidth = internalWidths[segIdx]!
-
-      if (segIdx === line.start.segmentIndex && gIdx > 0) {
-        // Partial start segment — use canvas measurement for the slice
-        const slice = segText.slice(gIdx)
-        ctx.font = bodyFont
-        const sliceWidth = ctx.measureText(slice).width
-        if (slice.trim().length > 0) {
-          words.push({ text: slice, x, y: lineTop, width: sliceWidth })
+        if (segIdx === line.start.segmentIndex && gIdx > 0) {
+          const slice = segText.slice(gIdx)
+          ctx.font = bodyFont
+          const sliceWidth = ctx.measureText(slice).width
+          if (slice.trim().length > 0) {
+            words.push({ text: slice, x, y: lineTop, width: sliceWidth })
+          }
+          x += sliceWidth
+        } else if (segIdx === line.end.segmentIndex && line.end.graphemeIndex > 0 && line.end.graphemeIndex < segText.length) {
+          const slice = segText.slice(0, line.end.graphemeIndex)
+          ctx.font = bodyFont
+          const sliceWidth = ctx.measureText(slice).width
+          if (slice.trim().length > 0) {
+            words.push({ text: slice, x, y: lineTop, width: sliceWidth })
+          }
+          x += sliceWidth
+        } else {
+          if (segText.trim().length > 0) {
+            words.push({ text: segText, x, y: lineTop, width: segWidth })
+          }
+          x += segWidth
         }
-        x += sliceWidth
-      } else if (segIdx === line.end.segmentIndex && line.end.graphemeIndex > 0 && line.end.graphemeIndex < segText.length) {
-        // Partial end segment
-        const slice = segText.slice(0, line.end.graphemeIndex)
-        ctx.font = bodyFont
-        const sliceWidth = ctx.measureText(slice).width
-        if (slice.trim().length > 0) {
-          words.push({ text: slice, x, y: lineTop, width: sliceWidth })
-        }
-        x += sliceWidth
-      } else {
-        // Full segment
-        if (segText.trim().length > 0) {
-          words.push({ text: segText, x, y: lineTop, width: segWidth })
-        }
-        x += segWidth
+
+        segIdx++
+        gIdx = 0
+        if (segIdx > line.end.segmentIndex) break
+        if (segIdx === line.end.segmentIndex && line.end.graphemeIndex === 0) break
       }
 
-      segIdx++
-      gIdx = 0
-      if (segIdx > line.end.segmentIndex) break
-      if (segIdx === line.end.segmentIndex && line.end.graphemeIndex === 0) break
+      cursor = line.end
     }
 
-    cursor = line.end
+    if (done) break
     lineTop += lineHeight
   }
 
