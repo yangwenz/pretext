@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit — Physics Text</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh;
+    background: #0f0f13;
+    color: #e8e6e3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header { padding: 24px; text-align: center; }
+  h1 { font-size: 24px; font-weight: 600; }
+  .hint { color: #8a8690; font-size: 14px; margin-top: 6px; }
+  canvas {
+    display: block;
+    border-radius: 12px;
+    background: #0a0a10;
+    cursor: crosshair;
+  }
+  a.back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    color: #6c8aff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .controls {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+  }
+  button {
+    padding: 8px 16px;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    background: #1a1a22;
+    color: #e8e6e3;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  button:hover { border-color: #6c8aff; }
+</style>
+</head>
+<body>
+<a class="back" href="/physics">&larr; All demos</a>
+<div class="header">
+  <h1>Orbital Text</h1>
+  <p class="hint">Words orbit a central attractor. Click to add gravitational pull at cursor. Bodies collide when orbits cross.</p>
+</div>
+<canvas id="canvas"></canvas>
+<div class="controls">
+  <button id="btn-add">Add Word</button>
+  <button id="btn-burst">Burst</button>
+  <button id="btn-reverse">Reverse</button>
+</div>
+<script type="module" src="./orbit.ts"></script>
+</body>
+</html>
