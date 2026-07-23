@@ -34,6 +34,11 @@
       "import": "./dist/rich-inline.js",
       "default": "./dist/rich-inline.js"
     },
+    "./physics": {
+      "types": "./dist/physics/index.d.ts",
+      "import": "./dist/physics/index.js",
+      "default": "./dist/physics/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
