@@ -297,10 +297,22 @@ function frame(now: number) {
     ctx.fillText(w.text, w.x, w.y)
   }
 
+  // --- Anchor bar ---
+  const barL = cradleStartX - 20
+  const barR = cradleStartX + (ballCount - 1) * ballSpacing + 20
+  const barGrad = ctx.createLinearGradient(barL, anchorY - 6, barL, anchorY)
+  barGrad.addColorStop(0, '#555')
+  barGrad.addColorStop(0.5, '#777')
+  barGrad.addColorStop(1, '#444')
+  ctx.fillStyle = barGrad
+  ctx.beginPath()
+  ctx.roundRect(barL, anchorY - 6, barR - barL, 5, 2.5)
+  ctx.fill()
+
   // --- Draw ropes ---
   for (const cb of cradleBalls) {
-    ctx.strokeStyle = cb.color + '30'
-    ctx.lineWidth = 1
+    ctx.strokeStyle = '#3a3a45'
+    ctx.lineWidth = 1.2
     ctx.beginPath()
     ctx.moveTo(cb.anchor.position.x, cb.anchor.position.y)
     ctx.lineTo(cb.ball.position.x, cb.ball.position.y)
@@ -311,38 +323,39 @@ function frame(now: number) {
   for (const cb of cradleBalls) {
     const ball = cb.ball
 
-    const gradient = ctx.createRadialGradient(
-      ball.position.x, ball.position.y, 0,
-      ball.position.x, ball.position.y, ballRadius + 4
+    // Outer glow
+    const glowGrad = ctx.createRadialGradient(
+      ball.position.x, ball.position.y, ballRadius,
+      ball.position.x, ball.position.y, ballRadius + 8
     )
-    gradient.addColorStop(0, cb.color + '33')
-    gradient.addColorStop(1, 'transparent')
-    ctx.fillStyle = gradient
+    glowGrad.addColorStop(0, cb.color + '20')
+    glowGrad.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGrad
     ctx.beginPath()
-    ctx.arc(ball.position.x, ball.position.y, ballRadius + 4, 0, Math.PI * 2)
+    ctx.arc(ball.position.x, ball.position.y, ballRadius + 8, 0, Math.PI * 2)
     ctx.fill()
 
-    ctx.fillStyle = cb.color + 'cc'
+    // Ball gradient fill
+    const ballGrad = ctx.createRadialGradient(
+      ball.position.x - 3, ball.position.y - 3, 1,
+      ball.position.x, ball.position.y, ballRadius
+    )
+    ballGrad.addColorStop(0, cb.color + 'ee')
+    ballGrad.addColorStop(1, cb.color + '88')
+    ctx.fillStyle = ballGrad
     ctx.beginPath()
     ctx.arc(ball.position.x, ball.position.y, ballRadius, 0, Math.PI * 2)
     ctx.fill()
 
     ctx.strokeStyle = cb.color
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = 1.2
     ctx.beginPath()
     ctx.arc(ball.position.x, ball.position.y, ballRadius, 0, Math.PI * 2)
     ctx.stroke()
   }
 
-  // --- Anchor bar ---
-  ctx.strokeStyle = '#2a2a35'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(cradleStartX - 20, anchorY - 3)
-  ctx.lineTo(cradleStartX + (ballCount - 1) * ballSpacing + 20, anchorY - 3)
-  ctx.stroke()
-
-  ctx.fillStyle = '#444'
+  // Anchor dots
+  ctx.fillStyle = '#666'
   for (const cb of cradleBalls) {
     ctx.beginPath()
     ctx.arc(cb.anchor.position.x, cb.anchor.position.y, 2.5, 0, Math.PI * 2)
@@ -351,10 +364,10 @@ function frame(now: number) {
 
   // --- Caption ---
   ctx.font = 'italic 11px Georgia, "Times New Roman", serif'
-  ctx.fillStyle = '#5a5660'
+  ctx.fillStyle = '#4a4650'
   ctx.textBaseline = 'bottom'
   ctx.textAlign = 'center'
-  ctx.fillText('Per-word positioning via pretext segments · layoutNextLine() reflows around physics balls · Drag any ball', W / 2, H - 10)
+  ctx.fillText('layoutNextLine() reflows text around physics balls in real time — drag any ball', W / 2, H - 12)
 
   requestAnimationFrame(frame)
 }

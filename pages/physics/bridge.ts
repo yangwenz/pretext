@@ -133,41 +133,54 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw connection lines
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'
-  ctx.lineWidth = 1.5
-  for (const conn of world.connections) {
-    if (conn.broken) continue
-    const a = world.bodies[conn.a]
-    const b = world.bodies[conn.b]
-    if (!a || !b) continue
+  // Draw connection lines with gradient per bridge
+  for (let w = 0; w < bridges.length; w++) {
+    const bridgeBodies = bridges[w]!
+    const color = colors[w]!
+    ctx.strokeStyle = color + '30'
+    ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(a.position.x, a.position.y)
-    ctx.lineTo(b.position.x, b.position.y)
+    for (let i = 0; i < bridgeBodies.length; i++) {
+      const b = bridgeBodies[i]!
+      if (i === 0) ctx.moveTo(b.position.x, b.position.y)
+      else ctx.lineTo(b.position.x, b.position.y)
+    }
     ctx.stroke()
   }
 
-  // Draw anchor points
+  // Draw anchor points with glow
   for (const body of world.bodies) {
     if (body.mass === Infinity && !body.dead) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
+      const glowGrad = ctx.createRadialGradient(body.position.x, body.position.y, 0, body.position.x, body.position.y, 12)
+      glowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.2)')
+      glowGrad.addColorStop(1, 'transparent')
+      ctx.fillStyle = glowGrad
       ctx.beginPath()
-      ctx.arc(body.position.x, body.position.y, 5, 0, Math.PI * 2)
+      ctx.arc(body.position.x, body.position.y, 12, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+      ctx.beginPath()
+      ctx.arc(body.position.x, body.position.y, 4, 0, Math.PI * 2)
       ctx.fill()
     }
   }
 
-  // Draw letters
+  // Draw letters with subtle shadow
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
   for (const body of world.bodies) {
-    if (body.dead) continue
+    if (body.dead || body.mass === Infinity) continue
+    const color = (body as any)._color || '#e8e6e3'
     ctx.save()
     ctx.translate(body.position.x, body.position.y)
     ctx.rotate(body.angle)
-    ctx.fillStyle = (body as any)._color || '#e8e6e3'
+    ctx.shadowColor = color
+    ctx.shadowBlur = 4
+    ctx.fillStyle = color
     ctx.fillText(body.char, 0, 0)
+    ctx.shadowBlur = 0
     ctx.restore()
   }
 
@@ -175,14 +188,20 @@ function frame(now: number) {
   if (dragBodyId !== null) {
     const body = world.bodies[dragBodyId]
     if (body) {
-      ctx.strokeStyle = 'rgba(108, 138, 255, 0.5)'
-      ctx.lineWidth = 1
+      ctx.strokeStyle = 'rgba(108, 138, 255, 0.6)'
+      ctx.lineWidth = 1.5
       ctx.setLineDash([4, 4])
       ctx.beginPath()
       ctx.moveTo(body.position.x, body.position.y)
       ctx.lineTo(dragTarget.x, dragTarget.y)
       ctx.stroke()
       ctx.setLineDash([])
+
+      // Target glow
+      ctx.fillStyle = 'rgba(108, 138, 255, 0.3)'
+      ctx.beginPath()
+      ctx.arc(dragTarget.x, dragTarget.y, 6, 0, Math.PI * 2)
+      ctx.fill()
     }
   }
 

@@ -1,4 +1,4 @@
-import { createWorld, createBody, step, render } from '../../src/physics/index.js'
+import { createWorld, createBody, step } from '../../src/physics/index.js'
 import { prepareWithSegments, layoutWithLines } from '../../src/layout.js'
 import type { Body } from '../../src/physics/types.js'
 
@@ -112,19 +112,53 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
+  // Floor glow when released
+  if (released) {
+    const floorGrad = ctx.createLinearGradient(0, H - 40, 0, H)
+    floorGrad.addColorStop(0, 'transparent')
+    floorGrad.addColorStop(1, 'rgba(108, 138, 255, 0.04)')
+    ctx.fillStyle = floorGrad
+    ctx.fillRect(0, H - 40, W, 40)
+  }
+
   // Draw rest positions as faint guides when not released
   if (!released) {
-    ctx.fillStyle = 'rgba(108, 138, 255, 0.15)'
+    ctx.fillStyle = 'rgba(108, 138, 255, 0.12)'
     ctx.font = font
     for (let i = 0; i < bodies.length; i++) {
       const body = bodies[i]!
       const rest = restPositions[i]!
       ctx.fillText(body.char, rest.x, rest.y + 6)
     }
+    // Pulse hint
+    const pulse = Math.sin(performance.now() / 800) * 0.3 + 0.7
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
+    ctx.fillStyle = `rgba(108, 138, 255, ${0.4 * pulse})`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('click anywhere', W / 2, H - 40)
+    ctx.textAlign = 'start'
+    ctx.textBaseline = 'alphabetic'
   }
 
-  ctx.fillStyle = '#e8e6e3'
-  render(ctx, world)
+  // Render bodies with velocity-based color
+  ctx.font = font
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  for (const body of bodies) {
+    if (body.dead) continue
+    const speed = Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y)
+    const t = Math.min(1, speed / 400)
+    const r = Math.round(232 + (255 - 232) * t)
+    const g = Math.round(230 + (107 - 230) * t)
+    const b = Math.round(227 + (107 - 227) * t)
+    ctx.fillStyle = `rgb(${r},${g},${b})`
+    ctx.save()
+    ctx.translate(body.position.x, body.position.y)
+    ctx.rotate(body.angle)
+    ctx.fillText(body.char, 0, 0)
+    ctx.restore()
+  }
 
   requestAnimationFrame(frame)
 }

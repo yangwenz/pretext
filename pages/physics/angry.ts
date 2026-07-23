@@ -284,19 +284,36 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Ground
-  ctx.fillStyle = '#2a2a35'
+  // Gradient ground
+  const groundGrad = ctx.createLinearGradient(0, H - 20, 0, H)
+  groundGrad.addColorStop(0, '#2a2a38')
+  groundGrad.addColorStop(1, '#1a1a25')
+  ctx.fillStyle = groundGrad
   ctx.fillRect(0, H - 20, W, 20)
 
-  // Slingshot
-  ctx.strokeStyle = '#8a7050'
-  ctx.lineWidth = 4
+  // Ground highlight line
+  ctx.strokeStyle = 'rgba(108, 138, 255, 0.06)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(0, H - 20)
+  ctx.lineTo(W, H - 20)
+  ctx.stroke()
+
+  // Slingshot with wood grain
+  const woodGrad = ctx.createLinearGradient(slingX - 12, 0, slingX + 12, 0)
+  woodGrad.addColorStop(0, '#6a5030')
+  woodGrad.addColorStop(0.5, '#9a7050')
+  woodGrad.addColorStop(1, '#6a5030')
+  ctx.strokeStyle = woodGrad
+  ctx.lineWidth = 5
+  ctx.lineCap = 'round'
   ctx.beginPath()
   ctx.moveTo(slingX - 12, H - 20)
   ctx.lineTo(slingX - 8, slingY + 10)
   ctx.moveTo(slingX + 12, H - 20)
   ctx.lineTo(slingX + 8, slingY + 10)
   ctx.stroke()
+  ctx.lineCap = 'butt'
 
   // Sling band
   if (aiming && activeBird) {

@@ -168,56 +168,75 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw frame bar
-  ctx.strokeStyle = '#333'
-  ctx.lineWidth = 3
+  // Frame bar with metallic gradient
+  const barLeft = startX - 60
+  const barRight = startX + (ballChars.length - 1) * spacing + 60
+  const barGrad = ctx.createLinearGradient(barLeft, anchorY - 14, barLeft, anchorY - 6)
+  barGrad.addColorStop(0, '#555')
+  barGrad.addColorStop(0.5, '#888')
+  barGrad.addColorStop(1, '#444')
+  ctx.fillStyle = barGrad
   ctx.beginPath()
-  ctx.moveTo(startX - 60, anchorY - 10)
-  ctx.lineTo(startX + (ballChars.length - 1) * spacing + 60, anchorY - 10)
-  ctx.stroke()
+  ctx.roundRect(barLeft, anchorY - 14, barRight - barLeft, 8, 4)
+  ctx.fill()
 
   // Draw ropes and balls
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
   for (const p of pendulums) {
-    // Rope
-    ctx.strokeStyle = '#555'
+    // Rope with subtle gradient
+    ctx.strokeStyle = '#444'
     ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.moveTo(p.anchor.position.x, p.anchor.position.y)
     ctx.lineTo(p.ball.position.x, p.ball.position.y)
     ctx.stroke()
 
-    // Ball glow
-    const gradient = ctx.createRadialGradient(
-      p.ball.position.x, p.ball.position.y, 0,
-      p.ball.position.x, p.ball.position.y, 24
+    // Outer glow
+    const glowGrad = ctx.createRadialGradient(
+      p.ball.position.x, p.ball.position.y, ballRadius,
+      p.ball.position.x, p.ball.position.y, ballRadius + 12
     )
-    gradient.addColorStop(0, p.color + '33')
-    gradient.addColorStop(1, 'transparent')
-    ctx.fillStyle = gradient
+    glowGrad.addColorStop(0, p.color + '22')
+    glowGrad.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGrad
     ctx.beginPath()
-    ctx.arc(p.ball.position.x, p.ball.position.y, 24, 0, Math.PI * 2)
+    ctx.arc(p.ball.position.x, p.ball.position.y, ballRadius + 12, 0, Math.PI * 2)
     ctx.fill()
 
-    // Ball circle
-    ctx.strokeStyle = p.color + '88'
-    ctx.lineWidth = 2
+    // Ball fill
+    const ballGrad = ctx.createRadialGradient(
+      p.ball.position.x - 4, p.ball.position.y - 4, 2,
+      p.ball.position.x, p.ball.position.y, ballRadius
+    )
+    ballGrad.addColorStop(0, p.color + 'dd')
+    ballGrad.addColorStop(1, p.color + '66')
+    ctx.fillStyle = ballGrad
+    ctx.beginPath()
+    ctx.arc(p.ball.position.x, p.ball.position.y, ballRadius, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Ball edge
+    ctx.strokeStyle = p.color
+    ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.arc(p.ball.position.x, p.ball.position.y, ballRadius, 0, Math.PI * 2)
     ctx.stroke()
 
     // Character
     ctx.font = font
-    ctx.fillStyle = p.color
+    ctx.fillStyle = '#fff'
+    ctx.shadowColor = p.color
+    ctx.shadowBlur = 4
     ctx.fillText(p.ball.char, p.ball.position.x, p.ball.position.y)
+    ctx.shadowBlur = 0
   }
 
   // Anchor dots
   for (const p of pendulums) {
-    ctx.fillStyle = '#666'
+    ctx.fillStyle = '#888'
     ctx.beginPath()
-    ctx.arc(p.anchor.position.x, p.anchor.position.y, 4, 0, Math.PI * 2)
+    ctx.arc(p.anchor.position.x, p.anchor.position.y, 3.5, 0, Math.PI * 2)
     ctx.fill()
   }
 

@@ -133,32 +133,56 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw connections as subtle lines
+  // Subtle floor line
+  ctx.strokeStyle = 'rgba(108, 138, 255, 0.05)'
   ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(0, H - 1)
+  ctx.lineTo(W, H - 1)
+  ctx.stroke()
+
+  // Draw word bounding shapes (hull outline)
   for (const obj of wordObjects) {
-    ctx.strokeStyle = obj.color + '33'
+    if (obj.bodies.every(b => b.dead)) continue
+    ctx.strokeStyle = obj.color + '18'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    const first = obj.bodies[0]!
+    const last = obj.bodies[obj.bodies.length - 1]!
+    ctx.moveTo(first.position.x, first.position.y)
     for (let i = 1; i < obj.bodies.length; i++) {
-      const a = obj.bodies[i - 1]!
-      const b = obj.bodies[i]!
-      ctx.beginPath()
-      ctx.moveTo(a.position.x, a.position.y)
-      ctx.lineTo(b.position.x, b.position.y)
-      ctx.stroke()
+      ctx.lineTo(obj.bodies[i]!.position.x, obj.bodies[i]!.position.y)
     }
+    ctx.stroke()
+
+    // Underline glow
+    const midX = (first.position.x + last.position.x) / 2
+    const midY = (first.position.y + last.position.y) / 2
+    const glowGrad = ctx.createRadialGradient(midX, midY, 0, midX, midY, 40)
+    glowGrad.addColorStop(0, obj.color + '08')
+    glowGrad.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGrad
+    ctx.fillRect(midX - 40, midY - 40, 80, 80)
   }
 
-  // Draw letters
+  // Draw letters with glow
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
   for (const obj of wordObjects) {
-    ctx.fillStyle = obj.color
     for (const body of obj.bodies) {
       if (body.dead) continue
+      const speed = Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y)
       ctx.save()
       ctx.translate(body.position.x, body.position.y)
       ctx.rotate(body.angle)
+      if (speed > 100) {
+        ctx.shadowColor = obj.color
+        ctx.shadowBlur = Math.min(12, speed / 50)
+      }
+      ctx.fillStyle = obj.color
       ctx.fillText(body.char, 0, 0)
+      ctx.shadowBlur = 0
       ctx.restore()
     }
   }

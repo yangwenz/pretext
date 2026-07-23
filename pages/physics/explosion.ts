@@ -65,6 +65,9 @@ for (let lineIdx = 0; lineIdx < layout.lines.length; lineIdx++) {
 
 let shattered = false
 let springStrength = 0
+let shockwaveTime = -1
+let shockwaveX = 0
+let shockwaveY = 0
 
 canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect()
@@ -86,6 +89,9 @@ canvas.addEventListener('click', (e) => {
     }
     shattered = true
     springStrength = 0
+    shockwaveTime = 0
+    shockwaveX = clickX
+    shockwaveY = clickY
   } else {
     world.config.gravity = { x: 0, y: 0 }
     springStrength = 200
@@ -126,20 +132,51 @@ function frame(now: number) {
     steps++
   }
 
+  if (shockwaveTime >= 0) {
+    shockwaveTime += elapsed
+  }
+
   ctx.clearRect(0, 0, W, H)
 
-  // Custom render with colors
+  // Shockwave ring
+  if (shockwaveTime >= 0 && shockwaveTime < 0.6) {
+    const t = shockwaveTime / 0.6
+    const radius = t * 400
+    const alpha = (1 - t) * 0.6
+    ctx.strokeStyle = `rgba(255, 107, 107, ${alpha})`
+    ctx.lineWidth = 3 * (1 - t)
+    ctx.beginPath()
+    ctx.arc(shockwaveX, shockwaveY, radius, 0, Math.PI * 2)
+    ctx.stroke()
+
+    // Inner glow
+    const glowGrad = ctx.createRadialGradient(shockwaveX, shockwaveY, 0, shockwaveX, shockwaveY, radius * 0.5)
+    glowGrad.addColorStop(0, `rgba(254, 202, 87, ${alpha * 0.3})`)
+    glowGrad.addColorStop(1, 'transparent')
+    ctx.fillStyle = glowGrad
+    ctx.beginPath()
+    ctx.arc(shockwaveX, shockwaveY, radius * 0.5, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Custom render with colors and glow
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
   for (let i = 0; i < bodies.length; i++) {
     const body = bodies[i]!
     if (body.dead) continue
+    const color = colors[i % colors.length]!
     ctx.save()
     ctx.translate(body.position.x, body.position.y)
     ctx.rotate(body.angle)
-    ctx.fillStyle = colors[i % colors.length]!
+    if (shattered) {
+      ctx.shadowColor = color
+      ctx.shadowBlur = 6
+    }
+    ctx.fillStyle = color
     ctx.fillText(body.char, 0, 0)
+    ctx.shadowBlur = 0
     ctx.restore()
   }
 

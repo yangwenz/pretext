@@ -137,24 +137,31 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw wind lines (visual effect)
+  // Draw wind lines with varying thickness and curvature
   if (settings.base > 0) {
     const intensity = settings.base / 700
-    ctx.strokeStyle = `rgba(108, 138, 255, ${0.05 + intensity * 0.08})`
-    ctx.lineWidth = 1
-    for (let i = 0; i < 8 + intensity * 12; i++) {
+    const lineCount = Math.round(10 + intensity * 16)
+    for (let i = 0; i < lineCount; i++) {
       const phase = time * (1.5 + i * 0.3) + i * 47
-      const yPos = 30 + (i * 53) % (H - 60)
-      const xStart = ((phase * 80) % (W + 200)) - 100
-      const length = 40 + intensity * 60
+      const yPos = 20 + (i * 43) % (H - 40)
+      const xStart = ((phase * 90) % (W + 300)) - 150
+      const length = 50 + intensity * 80
+      const alpha = (0.04 + intensity * 0.08) * (0.5 + Math.sin(phase * 0.5) * 0.5)
+
+      ctx.strokeStyle = `rgba(108, 138, 255, ${alpha})`
+      ctx.lineWidth = 0.8 + intensity * 1.2
+      ctx.lineCap = 'round'
       ctx.beginPath()
       ctx.moveTo(xStart, yPos)
-      ctx.lineTo(xStart + length, yPos + Math.sin(phase) * 3)
+      ctx.quadraticCurveTo(
+        xStart + length * 0.5, yPos + Math.sin(phase) * 6,
+        xStart + length, yPos + Math.sin(phase * 1.3) * 4
+      )
       ctx.stroke()
     }
   }
 
-  // Render letters with displacement-based opacity
+  // Render letters with displacement-based color shift
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
@@ -164,12 +171,18 @@ function frame(now: number) {
     const dx = body.position.x - rest.x
     const dy = body.position.y - rest.y
     const displacement = Math.sqrt(dx * dx + dy * dy)
-    const alpha = Math.max(0.4, 1 - displacement / 150)
+    const t = Math.min(1, displacement / 100)
+    const alpha = Math.max(0.5, 1 - t * 0.5)
+
+    // Shift toward blue as displacement increases
+    const r = Math.round(232 - t * 80)
+    const g = Math.round(230 - t * 60)
+    const b = Math.round(227 + t * 28)
 
     ctx.save()
     ctx.translate(body.position.x, body.position.y)
     ctx.rotate(body.angle)
-    ctx.fillStyle = `rgba(232, 230, 227, ${alpha})`
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
     ctx.fillText(body.char, 0, 0)
     ctx.restore()
   }

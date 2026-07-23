@@ -227,18 +227,30 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw shape outlines
+  // Ground line
+  ctx.strokeStyle = 'rgba(108, 138, 255, 0.04)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(0, H - 1)
+  ctx.lineTo(W, H - 1)
+  ctx.stroke()
+
+  // Draw shape outlines with glow fill
   ctx.lineWidth = 1.5
   for (const shape of shapes) {
-    ctx.strokeStyle = shape.color + '44'
+    const liveBodies = shape.bodies.filter(b => !b.dead)
+    if (liveBodies.length === 0) continue
+
+    ctx.strokeStyle = shape.color + '33'
+    ctx.fillStyle = shape.color + '08'
     ctx.beginPath()
-    for (let i = 0; i < shape.bodies.length; i++) {
-      const b = shape.bodies[i]!
-      if (b.dead) continue
+    for (let i = 0; i < liveBodies.length; i++) {
+      const b = liveBodies[i]!
       if (i === 0) ctx.moveTo(b.position.x, b.position.y)
       else ctx.lineTo(b.position.x, b.position.y)
     }
     ctx.closePath()
+    ctx.fill()
     ctx.stroke()
   }
 
@@ -247,13 +259,16 @@ function frame(now: number) {
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
   for (const shape of shapes) {
-    ctx.fillStyle = shape.color
     for (const body of shape.bodies) {
       if (body.dead) continue
       ctx.save()
       ctx.translate(body.position.x, body.position.y)
       ctx.rotate(body.angle)
+      ctx.shadowColor = shape.color
+      ctx.shadowBlur = 3
+      ctx.fillStyle = shape.color
       ctx.fillText(body.char, 0, 0)
+      ctx.shadowBlur = 0
       ctx.restore()
     }
   }
@@ -264,7 +279,15 @@ function frame(now: number) {
     ctx.arc(dragX, dragY, 120, 0, Math.PI * 2)
     ctx.strokeStyle = 'rgba(108, 138, 255, 0.3)'
     ctx.lineWidth = 2
+    ctx.setLineDash([8, 4])
     ctx.stroke()
+    ctx.setLineDash([])
+
+    // Center dot
+    ctx.fillStyle = 'rgba(108, 138, 255, 0.5)'
+    ctx.beginPath()
+    ctx.arc(dragX, dragY, 4, 0, Math.PI * 2)
+    ctx.fill()
   }
 
   requestAnimationFrame(frame)

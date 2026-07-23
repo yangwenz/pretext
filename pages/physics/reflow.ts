@@ -53,10 +53,25 @@ function computeLayout(mw: number): CharPos[] {
 function drawLayout(positions: CharPos[]) {
   ctx.clearRect(0, 0, W, H)
 
-  // Draw container outline
-  ctx.strokeStyle = '#2a2a35'
+  // Draw container with corner accents
+  const cx = paddingX - 4
+  const cy = paddingY - 4
+  const cw = maxWidth - paddingX * 2 + 8
+  const ch = H - paddingY * 2 + 8
+  ctx.strokeStyle = '#1e1e2e'
   ctx.lineWidth = 1
-  ctx.strokeRect(paddingX - 4, paddingY - 4, maxWidth - paddingX * 2 + 8, H - paddingY * 2 + 8)
+  ctx.strokeRect(cx, cy, cw, ch)
+
+  // Corner accents
+  const cornerLen = 12
+  ctx.strokeStyle = 'rgba(108, 138, 255, 0.3)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(cx, cy + cornerLen); ctx.lineTo(cx, cy); ctx.lineTo(cx + cornerLen, cy)
+  ctx.moveTo(cx + cw - cornerLen, cy); ctx.lineTo(cx + cw, cy); ctx.lineTo(cx + cw, cy + cornerLen)
+  ctx.moveTo(cx + cw, cy + ch - cornerLen); ctx.lineTo(cx + cw, cy + ch); ctx.lineTo(cx + cw - cornerLen, cy + ch)
+  ctx.moveTo(cx + cornerLen, cy + ch); ctx.lineTo(cx, cy + ch); ctx.lineTo(cx, cy + ch - cornerLen)
+  ctx.stroke()
 
   // Draw text
   ctx.font = font

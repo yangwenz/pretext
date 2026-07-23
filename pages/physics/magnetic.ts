@@ -117,16 +117,32 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw cursor glow
+  // Draw cursor field visualization
   if (mouseInCanvas) {
+    // Outer aura
     const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 100)
-    gradient.addColorStop(0, 'rgba(108, 138, 255, 0.15)')
+    gradient.addColorStop(0, 'rgba(108, 138, 255, 0.18)')
+    gradient.addColorStop(0.4, 'rgba(108, 138, 255, 0.06)')
     gradient.addColorStop(1, 'rgba(108, 138, 255, 0)')
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, W, H)
+
+    // Pulsing ring
+    const pulse = Math.sin(performance.now() / 400) * 0.3 + 0.7
+    ctx.strokeStyle = `rgba(108, 138, 255, ${0.2 * pulse})`
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(mouseX, mouseY, 50 + pulse * 10, 0, Math.PI * 2)
+    ctx.stroke()
+
+    // Center dot
+    ctx.fillStyle = 'rgba(108, 138, 255, 0.6)'
+    ctx.beginPath()
+    ctx.arc(mouseX, mouseY, 3, 0, Math.PI * 2)
+    ctx.fill()
   }
 
-  // Render with distance-based color
+  // Render with distance-based color and subtle glow
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
@@ -138,16 +154,21 @@ function frame(now: number) {
     const displacement = Math.sqrt(dx * dx + dy * dy)
     const t = Math.min(1, displacement / 60)
 
-    // Interpolate from white to accent blue based on displacement
+    // Interpolate from white through accent blue to purple at max displacement
     const r = Math.round(232 + (108 - 232) * t)
     const g = Math.round(230 + (138 - 230) * t)
     const b = Math.round(227 + (255 - 227) * t)
-    ctx.fillStyle = `rgb(${r},${g},${b})`
 
     ctx.save()
     ctx.translate(body.position.x, body.position.y)
     ctx.rotate(body.angle)
+    if (t > 0.3) {
+      ctx.shadowColor = `rgb(${r},${g},${b})`
+      ctx.shadowBlur = t * 8
+    }
+    ctx.fillStyle = `rgb(${r},${g},${b})`
     ctx.fillText(body.char, 0, 0)
+    ctx.shadowBlur = 0
     ctx.restore()
   }
 

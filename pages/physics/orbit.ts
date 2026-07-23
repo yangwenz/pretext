@@ -227,15 +227,44 @@ function frame(now: number) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw center star
-  const starGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 40)
-  starGrad.addColorStop(0, 'rgba(255, 255, 200, 0.6)')
-  starGrad.addColorStop(0.5, 'rgba(255, 200, 100, 0.2)')
+  // Starfield background (static tiny dots)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
+  const starSeed = 42
+  for (let i = 0; i < 60; i++) {
+    const sx = ((i * 7919 + starSeed) % W)
+    const sy = ((i * 6271 + starSeed * 3) % H)
+    const size = ((i * 31) % 3) * 0.3 + 0.4
+    ctx.beginPath()
+    ctx.arc(sx, sy, size, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Draw center star with multiple layers
+  const starGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 60)
+  starGrad.addColorStop(0, 'rgba(255, 255, 220, 0.8)')
+  starGrad.addColorStop(0.2, 'rgba(255, 220, 100, 0.4)')
+  starGrad.addColorStop(0.5, 'rgba(255, 180, 50, 0.1)')
   starGrad.addColorStop(1, 'transparent')
   ctx.fillStyle = starGrad
   ctx.beginPath()
-  ctx.arc(centerX, centerY, 40, 0, Math.PI * 2)
+  ctx.arc(centerX, centerY, 60, 0, Math.PI * 2)
   ctx.fill()
+
+  // Rotating corona
+  const coronaAngle = performance.now() / 3000
+  ctx.save()
+  ctx.translate(centerX, centerY)
+  ctx.rotate(coronaAngle)
+  ctx.strokeStyle = 'rgba(255, 234, 167, 0.15)'
+  ctx.lineWidth = 1
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2
+    ctx.beginPath()
+    ctx.moveTo(Math.cos(angle) * 15, Math.sin(angle) * 15)
+    ctx.lineTo(Math.cos(angle) * 35, Math.sin(angle) * 35)
+    ctx.stroke()
+  }
+  ctx.restore()
 
   ctx.fillStyle = '#ffeaa7'
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
@@ -254,17 +283,18 @@ function frame(now: number) {
     ctx.fill()
   }
 
-  // Draw trails
+  // Draw trails with fade
   for (const orbit of orbits) {
     if (orbit.trail.length < 2) continue
-    ctx.strokeStyle = orbit.color + '44'
-    ctx.lineWidth = 1.5
-    ctx.beginPath()
-    ctx.moveTo(orbit.trail[0]!.x, orbit.trail[0]!.y)
     for (let i = 1; i < orbit.trail.length; i++) {
+      const alpha = (i / orbit.trail.length) * 0.5
+      ctx.strokeStyle = orbit.color + Math.round(alpha * 255).toString(16).padStart(2, '0')
+      ctx.lineWidth = 1 + (i / orbit.trail.length) * 1.5
+      ctx.beginPath()
+      ctx.moveTo(orbit.trail[i - 1]!.x, orbit.trail[i - 1]!.y)
       ctx.lineTo(orbit.trail[i]!.x, orbit.trail[i]!.y)
+      ctx.stroke()
     }
-    ctx.stroke()
   }
 
   // Draw connections
