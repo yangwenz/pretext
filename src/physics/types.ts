@@ -79,4 +79,7 @@ export type World = {
   config: Required<WorldConfig>
   nextBodyId: number
   nextConnectionId: number
+  _hash: { cellSize: number; cells: Map<number, number[]> } | null
+  _checked: Set<number>
+  _renderOrder: Body[] | null
 }

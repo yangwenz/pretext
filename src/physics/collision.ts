@@ -9,7 +9,7 @@ export function createSpatialHash(cellSize: number): SpatialHash {
 export function updateSpatialHash(hash: SpatialHash, bodies: Body[]): void {
   hash.cells.clear()
   for (const body of bodies) {
-    if (body.dead || body.mass === Infinity) continue
+    if (body.dead) continue
     const minX = Math.floor((body.position.x - body.width / 2) / hash.cellSize)
     const maxX = Math.floor((body.position.x + body.width / 2) / hash.cellSize)
     const minY = Math.floor((body.position.y - body.height / 2) / hash.cellSize)
@@ -28,15 +28,17 @@ export function updateSpatialHash(hash: SpatialHash, bodies: Body[]): void {
   }
 }
 
-export function detectAndResolve(hash: SpatialHash, bodies: Body[]): void {
-  const checked = new Set<number>()
+export function detectAndResolve(hash: SpatialHash, bodies: Body[], checked: Set<number>): void {
+  checked.clear()
 
   for (const cell of hash.cells.values()) {
     for (let i = 0; i < cell.length; i++) {
       for (let j = i + 1; j < cell.length; j++) {
         const idA = cell[i]!
         const idB = cell[j]!
-        const pairKey = idA < idB ? idA * 100000 + idB : idB * 100000 + idA
+        // Cantor pairing — unique for all non-negative integer pairs
+        const s = idA + idB
+        const pairKey = (s * (s + 1)) / 2 + (idA < idB ? idA : idB)
         if (checked.has(pairKey)) continue
         checked.add(pairKey)
 

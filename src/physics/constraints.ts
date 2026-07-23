@@ -17,21 +17,41 @@ function getBody(bodies: Body[], id: number): Body | null {
 
 export function solveConstraint(conn: Connection, bodies: Body[]): void {
   if (conn.broken) return
-  if (!getBody(bodies, conn.a) || !getBody(bodies, conn.b)) return
+  const a = getBody(bodies, conn.a)
+  const b = getBody(bodies, conn.b)
+  if (!a || !b) return
 
-  let stress = 0
-  switch (conn.type) {
-    case 'rigid': stress = solveRigid(conn, bodies); break
-    case 'spring': stress = solveSpring(conn, bodies); break
-    case 'rope': stress = solveRope(conn, bodies); break
-    case 'hinge': stress = solveHinge(conn, bodies); break
-    case 'weld': stress = solveWeld(conn, bodies); break
-    case 'slider': stress = solveSlider(conn, bodies); break
+  // Measure stress before applying corrections; break early if threshold exceeded
+  if (conn.breakForce !== undefined) {
+    const stress = measureStress(conn, a, b)
+    if (stress > conn.breakForce) {
+      conn.broken = true
+      conn.onBreak?.()
+      return
+    }
   }
 
-  if (conn.breakForce !== undefined && stress > conn.breakForce) {
-    conn.broken = true
-    conn.onBreak?.()
+  switch (conn.type) {
+    case 'rigid': solveRigid(conn, bodies); break
+    case 'spring': solveSpring(conn, bodies); break
+    case 'rope': solveRope(conn, bodies); break
+    case 'hinge': solveHinge(conn, bodies); break
+    case 'weld': solveWeld(conn, bodies); break
+    case 'slider': solveSlider(conn, bodies); break
+  }
+}
+
+function measureStress(conn: Connection, a: Body, b: Body): number {
+  const dx = b.position.x - a.position.x
+  const dy = b.position.y - a.position.y
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  switch (conn.type) {
+    case 'rigid': return Math.abs(dist - conn.length)
+    case 'spring': return conn.stiffness * Math.abs(dist - conn.restLength)
+    case 'rope': return dist > conn.maxLength ? dist - conn.maxLength : 0
+    case 'weld': return dist + Math.abs((b.angle - a.angle) - conn.referenceAngle)
+    case 'hinge': return Math.abs(dist)
+    case 'slider': return 0
   }
 }
 

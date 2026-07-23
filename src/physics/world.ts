@@ -15,6 +15,9 @@ export function createWorld(config: WorldConfig): World {
     },
     nextBodyId: 0,
     nextConnectionId: 0,
+    _hash: null,
+    _checked: new Set(),
+    _renderOrder: null,
   }
 }
 

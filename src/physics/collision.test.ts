@@ -22,7 +22,7 @@ test('two overlapping bodies are separated', () => {
 
   const hash = createSpatialHash(24)
   updateSpatialHash(hash, bodies)
-  detectAndResolve(hash, bodies)
+  detectAndResolve(hash, bodies, new Set())
 
   const dx = Math.abs(b.position.x - a.position.x)
   // After resolution, gap should be at least the sum of half-widths (20)
@@ -36,7 +36,7 @@ test('non-overlapping bodies are unaffected', () => {
 
   const hash = createSpatialHash(24)
   updateSpatialHash(hash, bodies)
-  detectAndResolve(hash, bodies)
+  detectAndResolve(hash, bodies, new Set())
 
   expect(a.position.x).toBe(0)
   expect(b.position.x).toBe(50)
@@ -49,7 +49,7 @@ test('same collisionGroup bodies do not collide', () => {
 
   const hash = createSpatialHash(24)
   updateSpatialHash(hash, bodies)
-  detectAndResolve(hash, bodies)
+  detectAndResolve(hash, bodies, new Set())
 
   // Positions unchanged since same group
   expect(a.position.x).toBe(10)
@@ -63,9 +63,24 @@ test('dead bodies are excluded from collision', () => {
 
   const hash = createSpatialHash(24)
   updateSpatialHash(hash, bodies)
-  detectAndResolve(hash, bodies)
+  detectAndResolve(hash, bodies, new Set())
 
   expect(a.position.x).toBe(10)
+})
+
+test('dynamic body collides with static body', () => {
+  const dynamic = makeBody({ id: 0, position: { x: 10, y: 0 }, width: 20, height: 20 })
+  const staticBody = makeBody({ id: 1, position: { x: 15, y: 0 }, width: 20, height: 20, mass: Infinity })
+  const bodies = [dynamic, staticBody]
+
+  const hash = createSpatialHash(24)
+  updateSpatialHash(hash, bodies)
+  detectAndResolve(hash, bodies, new Set())
+
+  // Dynamic body should be pushed away; static body stays put
+  expect(staticBody.position.x).toBe(15)
+  const dx = Math.abs(dynamic.position.x - staticBody.position.x)
+  expect(dx).toBeGreaterThanOrEqual(19.9)
 })
 
 test('spatial hash correctly bins bodies', () => {

@@ -1,7 +1,7 @@
 import type { Body, Vec2 } from './types.js'
 
 export function integrate(body: Body, gravity: Vec2, damping: number, dt: number): void {
-  if (body.mass === Infinity || body.dead || body.sleeping) return
+  if (body.mass === Infinity || body.mass <= 0 || body.dead || body.sleeping) return
 
   const ax = body.force.x / body.mass + gravity.x
   const ay = body.force.y / body.mass + gravity.y
