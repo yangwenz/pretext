@@ -169,15 +169,13 @@ document.addEventListener('keyup', (e) => {
 canvas.addEventListener('click', launchBall)
 
 function launchBall() {
-  if (!launched || ball.position.y > H + 50) {
-    ball.position.x = W / 2
-    ball.position.y = FLIPPER_Y - 30
-    ball.velocity.x = (Math.random() - 0.5) * 80
-    ball.velocity.y = -800 - Math.random() * 200
-    ball.sleeping = false
-    ball.sleepTimer = 0
-    launched = true
-  }
+  ball.position.x = W / 2
+  ball.position.y = FLIPPER_Y - 30
+  ball.velocity.x = (Math.random() - 0.5) * 80
+  ball.velocity.y = -800 - Math.random() * 200
+  ball.sleeping = false
+  ball.sleepTimer = 0
+  launched = true
 }
 
 // --- Score ---
