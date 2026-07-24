@@ -32,7 +32,6 @@ const SUN_RADIUS = 28
 
 const world = createWorld({
   gravity: { x: 0, y: 0 },
-  bounds: { x: 10, y: 10, width: W - 20, height: H - 20 },
   iterations: 4,
   damping: 0.9999,
   sleepThresholdVel: 0.01,
@@ -59,23 +58,27 @@ type Planet = {
   ringColor?: string | undefined
 }
 
+// Scale orbits so outermost planet stays well within the canvas
+const maxOrbit = Math.min(W / 2, H / 2) - marginX - 20
+
 const planetDefs = [
-  { name: 'Mercury', orbitRadius: 65,  radius: 4,  speed: 4.1,  color: '#a0a0a0' },
-  { name: 'Venus',   orbitRadius: 90,  radius: 6,  speed: 3.0,  color: '#e8c87a' },
-  { name: 'Earth',   orbitRadius: 120, radius: 7,  speed: 2.4,  color: '#4a9de8' },
-  { name: 'Mars',    orbitRadius: 150, radius: 5,  speed: 1.9,  color: '#d45f3c' },
-  { name: 'Jupiter', orbitRadius: 200, radius: 16, speed: 1.1,  color: '#d4a574' },
-  { name: 'Saturn',  orbitRadius: 250, radius: 13, speed: 0.8,  color: '#e8d5a0', ringColor: '#c8b888' },
-  { name: 'Uranus',  orbitRadius: 295, radius: 9,  speed: 0.55, color: '#7ecbc4' },
-  { name: 'Neptune', orbitRadius: 330, radius: 9,  speed: 0.4,  color: '#4466cc' },
+  { name: 'Mercury', orbitFrac: 0.15, radius: 4,  speed: 4.1,  color: '#a0a0a0' },
+  { name: 'Venus',   orbitFrac: 0.22, radius: 6,  speed: 3.0,  color: '#e8c87a' },
+  { name: 'Earth',   orbitFrac: 0.30, radius: 7,  speed: 2.4,  color: '#4a9de8' },
+  { name: 'Mars',    orbitFrac: 0.38, radius: 5,  speed: 1.9,  color: '#d45f3c' },
+  { name: 'Jupiter', orbitFrac: 0.54, radius: 16, speed: 1.1,  color: '#d4a574' },
+  { name: 'Saturn',  orbitFrac: 0.70, radius: 13, speed: 0.8,  color: '#e8d5a0', ringColor: '#c8b888' },
+  { name: 'Uranus',  orbitFrac: 0.85, radius: 9,  speed: 0.55, color: '#7ecbc4' },
+  { name: 'Neptune', orbitFrac: 1.00, radius: 9,  speed: 0.4,  color: '#4466cc' },
 ]
 
 const planets: Planet[] = []
 
 for (const def of planetDefs) {
+  const orbitRadius = def.orbitFrac * maxOrbit
   const phase = Math.random() * Math.PI * 2
-  const startX = SUN_X + Math.cos(phase) * def.orbitRadius
-  const startY = SUN_Y + Math.sin(phase) * def.orbitRadius
+  const startX = SUN_X + Math.cos(phase) * orbitRadius
+  const startY = SUN_Y + Math.sin(phase) * orbitRadius
 
   const body = createBody(world, def.name[0]!, bodyFont, {
     position: { x: startX, y: startY },
@@ -86,11 +89,14 @@ for (const def of planetDefs) {
     friction: 0,
     collisionGroup: 0,
   })
+  // Initial orbital velocity
+  body.velocity.x = -Math.sin(phase) * orbitRadius * def.speed
+  body.velocity.y = Math.cos(phase) * orbitRadius * def.speed
 
   planets.push({
     name: def.name,
     body,
-    orbitRadius: def.orbitRadius,
+    orbitRadius,
     radius: def.radius,
     speed: def.speed,
     phase,
@@ -281,21 +287,22 @@ function frame(now: number) {
   accumulator += elapsed
   time += elapsed
 
-  // Orbital forces — each planet orbits the Sun
+  // Orbital mechanics — directly place planets on circular orbits
   for (const p of planets) {
     if (p.body.mass === Infinity) continue
-    const dx = SUN_X - p.body.position.x
-    const dy = SUN_Y - p.body.position.y
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    // Centripetal pull toward sun
-    const pull = 3 * (dist - p.orbitRadius)
-    p.body.force.x += (dx / dist) * pull
-    p.body.force.y += (dy / dist) * pull
-    // Tangential force for orbit
-    const tangentX = -dy / dist
-    const tangentY = dx / dist
-    p.body.force.x += tangentX * p.speed * 60
-    p.body.force.y += tangentY * p.speed * 60
+    p.phase += p.speed * elapsed
+    const targetX = SUN_X + Math.cos(p.phase) * p.orbitRadius
+    const targetY = SUN_Y + Math.sin(p.phase) * p.orbitRadius
+    // Strong spring toward the orbital position
+    const dx = targetX - p.body.position.x
+    const dy = targetY - p.body.position.y
+    p.body.force.x += dx * 300
+    p.body.force.y += dy * 300
+    // Dampen velocity toward orbital velocity
+    const orbVx = -Math.sin(p.phase) * p.orbitRadius * p.speed
+    const orbVy = Math.cos(p.phase) * p.orbitRadius * p.speed
+    p.body.force.x += (orbVx - p.body.velocity.x) * 10
+    p.body.force.y += (orbVy - p.body.velocity.y) * 10
     p.body.sleeping = false
     p.body.sleepTimer = 0
   }
