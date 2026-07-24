@@ -148,22 +148,22 @@ const FLIPPER_Y = H - 100
 const LEFT_FLIPPER_X = W * 0.35
 const RIGHT_FLIPPER_X = W * 0.65
 let leftFlipperAngle = 0.3
-let rightFlipperAngle = -0.3
+let rightFlipperAngle = 0.3
 let leftFlipperTarget = 0.3
-let rightFlipperTarget = -0.3
+let rightFlipperTarget = 0.3
 
 // --- Input ---
 let launched = false
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'z') leftFlipperTarget = -0.5
-  if (e.key === 'ArrowRight' || e.key === '/') rightFlipperTarget = 0.5
+  if (e.key === 'ArrowRight' || e.key === '/') rightFlipperTarget = -0.5
   if (e.key === ' ') launchBall()
 })
 
 document.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'z') leftFlipperTarget = 0.3
-  if (e.key === 'ArrowRight' || e.key === '/') rightFlipperTarget = -0.3
+  if (e.key === 'ArrowRight' || e.key === '/') rightFlipperTarget = 0.3
 })
 
 canvas.addEventListener('click', launchBall)
