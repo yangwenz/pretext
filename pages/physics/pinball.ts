@@ -616,19 +616,40 @@ function frame(now: number) {
       const dx = (w.x + w.width / 2) - ball.position.x
       const dy = (w.y + lineHeight / 2) - ball.position.y
       const dist = Math.sqrt(dx * dx + dy * dy)
-      const proximity = Math.max(0, 1 - dist / 50)
+      const proximity = Math.max(0, 1 - dist / 60)
       if (proximity > 0.01) {
-        // Glow and shift color near ball
-        const r = Math.round(144 + proximity * 111)
-        const g = Math.round(138 + proximity * 80)
-        const b = Math.round(132 + proximity * 123)
-        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
-        ctx.globalAlpha = 0.75 + proximity * 0.25
-        // Slight push offset away from ball
-        const pushX = (dx / (dist || 1)) * proximity * 3
-        const pushY = (dy / (dist || 1)) * proximity * 3
+        const intensity = proximity * proximity
+        // Bright white-blue glow on closest text
+        const r = Math.round(144 + intensity * 111)
+        const g = Math.round(160 + intensity * 95)
+        const b2 = Math.round(180 + intensity * 75)
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b2})`
+        ctx.globalAlpha = 0.8 + intensity * 0.2
+
+        // Push text away from ball
+        const pushX = (dx / (dist || 1)) * intensity * 5
+        const pushY = (dy / (dist || 1)) * intensity * 4
+
+        // Draw glow halo behind text when very close
+        if (intensity > 0.3) {
+          ctx.save()
+          ctx.globalCompositeOperation = 'screen'
+          ctx.shadowColor = `rgba(${r}, ${g}, ${b2}, ${intensity * 0.8})`
+          ctx.shadowBlur = 8 + intensity * 12
+          ctx.fillText(w.text, w.x + pushX, w.y + pushY)
+          ctx.restore()
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b2})`
+          ctx.globalAlpha = 0.8 + intensity * 0.2
+        }
         ctx.fillText(w.text, w.x + pushX, w.y + pushY)
         ctx.globalAlpha = 1
+
+        // Emit sparks from text when ball is touching
+        if (intensity > 0.5 && Math.random() < intensity * 0.35) {
+          const sparkX = w.x + Math.random() * w.width
+          const sparkY = w.y + Math.random() * lineHeight * 0.6
+          emitSparks(sparkX, sparkY, 1, `rgba(${r}, ${g}, ${b2}, 1)`, 60 + intensity * 40)
+        }
         continue
       }
     }
