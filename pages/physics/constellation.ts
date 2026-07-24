@@ -1,5 +1,5 @@
 import { prepareWithSegments, layoutNextLine, type LayoutCursor } from '../../src/layout.js'
-import { createWorld, createBody, step, createConnection } from '../../src/physics/index.js'
+import { createWorld, createBody, step } from '../../src/physics/index.js'
 import type { Body } from '../../src/physics/types.js'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
@@ -19,84 +19,83 @@ const lineHeight = 25
 const marginX = 50
 const textStartY = 50
 
-const documentText = `We are all made of stars. Every atom in your body was once inside a star that exploded. You are stardust, gathered by gravity into a form that can wonder at its own existence. Look up at the night sky and see your ancestry written in light. The constellations are not fixed — they drift apart over millennia, their patterns dissolving into new arrangements that future eyes will name. What we call Orion will scatter. What we call home will cool. But the atoms persist, cycling through stars and planets and beings, endlessly recomposed. There is no boundary between you and the universe; only a temporary concentration of complexity that looks back at the whole and says: I see you. I am you. We are the cosmos examining itself, briefly, before returning to the dance.`
+const documentText = `The solar system is a clockwork of gravity. Eight worlds trace ellipses around a middle-aged star, each locked into an orbit shaped by mass and velocity. Mercury races closest, scorched and cratered. Venus spins backward under a crushing atmosphere. Earth alone carries oceans and life. Mars rusts in silence, waiting. Beyond the asteroid belt, Jupiter commands a court of moons — a failed star, still radiating more heat than it receives. Saturn floats in its rings of ice and dust. Uranus rolls on its side, a frozen mystery. Neptune howls with the fastest winds in the system. Between these worlds, the text you read now flows like interplanetary space — filling every gap the planets leave behind, reforming as they pass through, a reminder that even emptiness has structure when gravity is the architect.`
 
 const prepared = prepareWithSegments(documentText, bodyFont)
 const internalWidths: number[] = (prepared as any).widths
 const segments: string[] = prepared.segments
 
-// --- Orbiting bodies (stars/planets) ---
+// --- Solar system ---
+const SUN_X = W / 2
+const SUN_Y = H / 2
+const SUN_RADIUS = 28
+
 const world = createWorld({
   gravity: { x: 0, y: 0 },
-  bounds: { x: 20, y: 20, width: W - 40, height: H - 40 },
-  iterations: 6,
-  damping: 0.999,
-  sleepThresholdVel: 0.05,
-  sleepDelay: 300,
+  bounds: { x: 10, y: 10, width: W - 20, height: H - 20 },
+  iterations: 4,
+  damping: 0.9999,
+  sleepThresholdVel: 0.01,
+  sleepDelay: 500,
 })
 
-const STAR_COUNT = 6
-const starRadius = 12
-const starColors = ['#6c8aff', '#a78bfa', '#4fc3f7', '#f9a825', '#ff6b6b', '#69f0ae']
+// Sun (static)
+const sunBody = createBody(world, '☉', bodyFont, {
+  position: { x: SUN_X, y: SUN_Y },
+  mass: Infinity,
+  width: SUN_RADIUS * 2,
+  height: SUN_RADIUS * 2,
+  collisionGroup: 99,
+})
 
-type StarBody = {
+type Planet = {
+  name: string
   body: Body
-  color: string
-  orbitCenterX: number
-  orbitCenterY: number
   orbitRadius: number
-  orbitSpeed: number
+  radius: number
+  speed: number
   phase: number
+  color: string
+  ringColor?: string | undefined
 }
 
-const starBodies: StarBody[] = []
+const planetDefs = [
+  { name: 'Mercury', orbitRadius: 65,  radius: 4,  speed: 4.1,  color: '#a0a0a0' },
+  { name: 'Venus',   orbitRadius: 90,  radius: 6,  speed: 3.0,  color: '#e8c87a' },
+  { name: 'Earth',   orbitRadius: 120, radius: 7,  speed: 2.4,  color: '#4a9de8' },
+  { name: 'Mars',    orbitRadius: 150, radius: 5,  speed: 1.9,  color: '#d45f3c' },
+  { name: 'Jupiter', orbitRadius: 200, radius: 16, speed: 1.1,  color: '#d4a574' },
+  { name: 'Saturn',  orbitRadius: 250, radius: 13, speed: 0.8,  color: '#e8d5a0', ringColor: '#c8b888' },
+  { name: 'Uranus',  orbitRadius: 295, radius: 9,  speed: 0.55, color: '#7ecbc4' },
+  { name: 'Neptune', orbitRadius: 330, radius: 9,  speed: 0.4,  color: '#4466cc' },
+]
 
-for (let i = 0; i < STAR_COUNT; i++) {
-  const orbitCX = W * (0.2 + Math.random() * 0.6)
-  const orbitCY = H * (0.2 + Math.random() * 0.6)
-  const orbitR = 60 + Math.random() * 100
+const planets: Planet[] = []
+
+for (const def of planetDefs) {
   const phase = Math.random() * Math.PI * 2
-  const speed = 0.4 + Math.random() * 0.5
+  const startX = SUN_X + Math.cos(phase) * def.orbitRadius
+  const startY = SUN_Y + Math.sin(phase) * def.orbitRadius
 
-  const startX = orbitCX + Math.cos(phase) * orbitR
-  const startY = orbitCY + Math.sin(phase) * orbitR
-
-  const body = createBody(world, '★', bodyFont, {
+  const body = createBody(world, def.name[0]!, bodyFont, {
     position: { x: startX, y: startY },
-    mass: 3,
-    width: starRadius * 2,
-    height: starRadius * 2,
-    restitution: 0.8,
+    mass: 2,
+    width: def.radius * 2,
+    height: def.radius * 2,
+    restitution: 0.5,
     friction: 0,
     collisionGroup: 0,
   })
 
-  starBodies.push({
+  planets.push({
+    name: def.name,
     body,
-    color: starColors[i % starColors.length]!,
-    orbitCenterX: orbitCX,
-    orbitCenterY: orbitCY,
-    orbitRadius: orbitR,
-    orbitSpeed: speed,
+    orbitRadius: def.orbitRadius,
+    radius: def.radius,
+    speed: def.speed,
     phase,
-  })
-}
-
-// Connections between some stars (visual constellation lines that also constrain physics)
-const constellationPairs: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [1, 4], [2, 5]]
-for (const [a, b] of constellationPairs) {
-  const bodyA = starBodies[a]!.body
-  const bodyB = starBodies[b]!.body
-  const dx = bodyA.position.x - bodyB.position.x
-  const dy = bodyA.position.y - bodyB.position.y
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  createConnection(world, {
-    type: 'spring',
-    a: bodyA.id,
-    b: bodyB.id,
-    stiffness: 2,
-    damping: 0.5,
-    restLength: Math.min(dist, 200),
+    color: def.color,
+    ringColor: def.ringColor,
   })
 }
 
@@ -107,13 +106,13 @@ canvas.addEventListener('mousedown', (e) => {
   const rect = canvas.getBoundingClientRect()
   const mx = e.clientX - rect.left
   const my = e.clientY - rect.top
-  for (let i = 0; i < starBodies.length; i++) {
-    const s = starBodies[i]!.body
-    const dx = mx - s.position.x
-    const dy = my - s.position.y
-    if (dx * dx + dy * dy < (starRadius + 10) * (starRadius + 10)) {
+  for (let i = 0; i < planets.length; i++) {
+    const p = planets[i]!
+    const dx = mx - p.body.position.x
+    const dy = my - p.body.position.y
+    if (dx * dx + dy * dy < (p.radius + 10) * (p.radius + 10)) {
       dragIdx = i
-      s.mass = Infinity
+      p.body.mass = Infinity
       break
     }
   }
@@ -124,18 +123,18 @@ canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect()
   const mx = e.clientX - rect.left
   const my = e.clientY - rect.top
-  const s = starBodies[dragIdx]!.body
-  s.position.x = mx
-  s.position.y = my
-  s.velocity.x = 0
-  s.velocity.y = 0
+  const p = planets[dragIdx]!.body
+  p.position.x = mx
+  p.position.y = my
+  p.velocity.x = 0
+  p.velocity.y = 0
 })
 
 function releaseDrag() {
   if (dragIdx >= 0) {
-    starBodies[dragIdx]!.body.mass = 3
-    starBodies[dragIdx]!.body.sleeping = false
-    starBodies[dragIdx]!.body.sleepTimer = 0
+    planets[dragIdx]!.body.mass = 2
+    planets[dragIdx]!.body.sleeping = false
+    planets[dragIdx]!.body.sleepTimer = 0
     dragIdx = -1
   }
 }
@@ -143,28 +142,10 @@ function releaseDrag() {
 canvas.addEventListener('mouseup', releaseDrag)
 canvas.addEventListener('mouseleave', releaseDrag)
 
-// Click to pulse
-canvas.addEventListener('click', (e) => {
-  if (dragIdx >= 0) return
-  const rect = canvas.getBoundingClientRect()
-  const cx = e.clientX - rect.left
-  const cy = e.clientY - rect.top
-  for (const s of starBodies) {
-    const dx = s.body.position.x - cx
-    const dy = s.body.position.y - cy
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    const impulse = 300 / (1 + dist * 0.01)
-    s.body.velocity.x += (dx / dist) * impulse * 0.05
-    s.body.velocity.y += (dy / dist) * impulse * 0.05
-    s.body.sleeping = false
-    s.body.sleepTimer = 0
-  }
-})
-
-// --- Text layout around stars ---
+// --- Text layout around planets and sun ---
 type PositionedWord = { text: string; x: number; y: number; width: number }
 
-function layoutAroundStars(): PositionedWord[] {
+function layoutAroundPlanets(): PositionedWord[] {
   const words: PositionedWord[] = []
   let cursor: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
   let lineTop = textStartY
@@ -175,15 +156,26 @@ function layoutAroundStars(): PositionedWord[] {
     const bandTop = lineTop
     const bandBottom = lineTop + lineHeight
 
-    // Find stars overlapping this line band
     const blocked: { left: number; right: number }[] = []
-    for (const s of starBodies) {
-      const starTop = s.body.position.y - starRadius - 4
-      const starBottom = s.body.position.y + starRadius + 4
-      if (starBottom > bandTop && starTop < bandBottom) {
+
+    // Sun blocks text
+    const sunTop = sunBody.position.y - SUN_RADIUS - 4
+    const sunBot = sunBody.position.y + SUN_RADIUS + 4
+    if (sunBot > bandTop && sunTop < bandBottom) {
+      blocked.push({
+        left: sunBody.position.x - SUN_RADIUS - 6,
+        right: sunBody.position.x + SUN_RADIUS + 6,
+      })
+    }
+
+    // Planets block text
+    for (const p of planets) {
+      const pTop = p.body.position.y - p.radius - 4
+      const pBot = p.body.position.y + p.radius + 4
+      if (pBot > bandTop && pTop < bandBottom) {
         blocked.push({
-          left: s.body.position.x - starRadius - 6,
-          right: s.body.position.x + starRadius + 6,
+          left: p.body.position.x - p.radius - 6,
+          right: p.body.position.x + p.radius + 6,
         })
       }
     }
@@ -263,15 +255,15 @@ function layoutAroundStars(): PositionedWord[] {
   return words
 }
 
-// --- Background decoration ---
+// --- Background stars ---
 type BgStar = { x: number; y: number; size: number; alpha: number; phase: number }
 const bgStars: BgStar[] = []
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 120; i++) {
   bgStars.push({
     x: Math.random() * W,
     y: Math.random() * H,
     size: 0.3 + Math.random() * 1,
-    alpha: 0.08 + Math.random() * 0.15,
+    alpha: 0.06 + Math.random() * 0.12,
     phase: Math.random() * Math.PI * 2,
   })
 }
@@ -289,23 +281,23 @@ function frame(now: number) {
   accumulator += elapsed
   time += elapsed
 
-  // Orbital forces
-  for (const s of starBodies) {
-    if (s.body.mass === Infinity) continue
-    // Gentle orbit around their center
-    const dx = s.orbitCenterX - s.body.position.x
-    const dy = s.orbitCenterY - s.body.position.y
+  // Orbital forces — each planet orbits the Sun
+  for (const p of planets) {
+    if (p.body.mass === Infinity) continue
+    const dx = SUN_X - p.body.position.x
+    const dy = SUN_Y - p.body.position.y
     const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    // Centripetal
-    s.body.force.x += dx * 2
-    s.body.force.y += dy * 2
-    // Tangential
+    // Centripetal pull toward sun
+    const pull = 3 * (dist - p.orbitRadius)
+    p.body.force.x += (dx / dist) * pull
+    p.body.force.y += (dy / dist) * pull
+    // Tangential force for orbit
     const tangentX = -dy / dist
     const tangentY = dx / dist
-    s.body.force.x += tangentX * s.orbitSpeed * 80
-    s.body.force.y += tangentY * s.orbitSpeed * 80
-    s.body.sleeping = false
-    s.body.sleepTimer = 0
+    p.body.force.x += tangentX * p.speed * 60
+    p.body.force.y += tangentY * p.speed * 60
+    p.body.sleeping = false
+    p.body.sleepTimer = 0
   }
 
   let steps = 0
@@ -318,19 +310,6 @@ function frame(now: number) {
   // --- Render ---
   ctx.clearRect(0, 0, W, H)
 
-  // Nebula background
-  const nebula1 = ctx.createRadialGradient(W * 0.25, H * 0.35, 30, W * 0.25, H * 0.35, 200)
-  nebula1.addColorStop(0, 'rgba(30, 15, 60, 0.06)')
-  nebula1.addColorStop(1, 'transparent')
-  ctx.fillStyle = nebula1
-  ctx.fillRect(0, 0, W, H)
-
-  const nebula2 = ctx.createRadialGradient(W * 0.75, H * 0.6, 20, W * 0.75, H * 0.6, 180)
-  nebula2.addColorStop(0, 'rgba(15, 30, 80, 0.05)')
-  nebula2.addColorStop(1, 'transparent')
-  ctx.fillStyle = nebula2
-  ctx.fillRect(0, 0, W, H)
-
   // Background stars
   for (const s of bgStars) {
     const twinkle = Math.sin(time * 1.5 + s.phase) * 0.3 + 0.7
@@ -340,74 +319,118 @@ function frame(now: number) {
     ctx.fill()
   }
 
-  // Constellation connection lines
-  ctx.lineWidth = 0.8
-  for (const [aIdx, bIdx] of constellationPairs) {
-    const a = starBodies[aIdx]!.body
-    const b = starBodies[bIdx]!.body
-    const dx = a.position.x - b.position.x
-    const dy = a.position.y - b.position.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    const alpha = Math.max(0, Math.min(0.25, 1 - dist / 400))
-    ctx.strokeStyle = `rgba(140, 160, 255, ${alpha})`
+  // Orbit paths (faint ellipses)
+  ctx.lineWidth = 0.5
+  for (const p of planets) {
+    ctx.strokeStyle = `rgba(100, 120, 180, 0.12)`
     ctx.beginPath()
-    ctx.moveTo(a.position.x, a.position.y)
-    ctx.lineTo(b.position.x, b.position.y)
+    ctx.arc(SUN_X, SUN_Y, p.orbitRadius, 0, Math.PI * 2)
     ctx.stroke()
   }
 
   // --- Reflow text ---
-  const words = layoutAroundStars()
+  const words = layoutAroundPlanets()
 
   ctx.font = bodyFont
   ctx.textBaseline = 'top'
   ctx.textAlign = 'left'
   for (const w of words) {
-    // Tint words near stars
-    let minDist = Infinity
-    let nearestColor = '#c8c4be'
-    for (const s of starBodies) {
-      const dx = (w.x + w.width / 2) - s.body.position.x
-      const dy = (w.y + lineHeight / 2) - s.body.position.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < minDist) {
-        minDist = dist
-        nearestColor = s.color
+    // Tint words by proximity to sun/planets
+    const dxSun = (w.x + w.width / 2) - SUN_X
+    const dySun = (w.y + lineHeight / 2) - SUN_Y
+    const distSun = Math.sqrt(dxSun * dxSun + dySun * dySun)
+    const sunTint = Math.max(0, 1 - distSun / 60)
+
+    let nearestPlanetDist = Infinity
+    let nearestColor = ''
+    for (const p of planets) {
+      const dpx = (w.x + w.width / 2) - p.body.position.x
+      const dpy = (w.y + lineHeight / 2) - p.body.position.y
+      const dp = Math.sqrt(dpx * dpx + dpy * dpy)
+      if (dp < nearestPlanetDist) {
+        nearestPlanetDist = dp
+        nearestColor = p.color
       }
     }
-    const tint = Math.max(0, 1 - minDist / 80)
-    if (tint > 0.05) {
+    const planetTint = Math.max(0, 1 - nearestPlanetDist / 40)
+
+    if (sunTint > 0.05) {
+      ctx.fillStyle = '#ffd54f'
+      ctx.globalAlpha = 0.5 + (1 - sunTint) * 0.5
+    } else if (planetTint > 0.05) {
       ctx.fillStyle = nearestColor
-      ctx.globalAlpha = 0.4 + (1 - tint) * 0.6
+      ctx.globalAlpha = 0.5 + (1 - planetTint) * 0.5
     } else {
-      ctx.fillStyle = '#b8b4ae'
+      ctx.fillStyle = '#b0aaa4'
       ctx.globalAlpha = 0.85
     }
     ctx.fillText(w.text, w.x, w.y)
   }
   ctx.globalAlpha = 1
 
-  // --- Draw stars ---
-  for (const s of starBodies) {
-    const b = s.body
-    // Outer glow
-    const glow = ctx.createRadialGradient(b.position.x, b.position.y, starRadius * 0.5, b.position.x, b.position.y, starRadius * 3)
-    glow.addColorStop(0, s.color + '30')
+  // --- Draw Sun ---
+  // Corona
+  const corona = ctx.createRadialGradient(SUN_X, SUN_Y, SUN_RADIUS, SUN_X, SUN_Y, SUN_RADIUS * 3)
+  corona.addColorStop(0, 'rgba(255, 200, 50, 0.15)')
+  corona.addColorStop(0.5, 'rgba(255, 150, 30, 0.05)')
+  corona.addColorStop(1, 'transparent')
+  ctx.fillStyle = corona
+  ctx.beginPath()
+  ctx.arc(SUN_X, SUN_Y, SUN_RADIUS * 3, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Sun body
+  const sunGrad = ctx.createRadialGradient(SUN_X - 5, SUN_Y - 5, 2, SUN_X, SUN_Y, SUN_RADIUS)
+  sunGrad.addColorStop(0, '#fff8e0')
+  sunGrad.addColorStop(0.4, '#ffd54f')
+  sunGrad.addColorStop(0.8, '#ff9800')
+  sunGrad.addColorStop(1, '#e65100')
+  ctx.fillStyle = sunGrad
+  ctx.beginPath()
+  ctx.arc(SUN_X, SUN_Y, SUN_RADIUS, 0, Math.PI * 2)
+  ctx.fill()
+
+  // --- Draw planets ---
+  for (const p of planets) {
+    const bx = p.body.position.x
+    const by = p.body.position.y
+
+    // Glow
+    const glow = ctx.createRadialGradient(bx, by, p.radius * 0.3, bx, by, p.radius * 2.5)
+    glow.addColorStop(0, p.color + '25')
     glow.addColorStop(1, 'transparent')
     ctx.fillStyle = glow
     ctx.beginPath()
-    ctx.arc(b.position.x, b.position.y, starRadius * 3, 0, Math.PI * 2)
+    ctx.arc(bx, by, p.radius * 2.5, 0, Math.PI * 2)
     ctx.fill()
 
-    // Star body
-    const grad = ctx.createRadialGradient(b.position.x - 2, b.position.y - 2, 1, b.position.x, b.position.y, starRadius)
-    grad.addColorStop(0, '#fff')
-    grad.addColorStop(0.4, s.color)
-    grad.addColorStop(1, s.color + '66')
-    ctx.fillStyle = grad
+    // Planet body
+    const pGrad = ctx.createRadialGradient(bx - p.radius * 0.3, by - p.radius * 0.3, 1, bx, by, p.radius)
+    pGrad.addColorStop(0, '#ffffff')
+    pGrad.addColorStop(0.3, p.color)
+    pGrad.addColorStop(1, p.color + '88')
+    ctx.fillStyle = pGrad
     ctx.beginPath()
-    ctx.arc(b.position.x, b.position.y, starRadius, 0, Math.PI * 2)
+    ctx.arc(bx, by, p.radius, 0, Math.PI * 2)
     ctx.fill()
+
+    // Saturn's ring
+    if (p.ringColor) {
+      ctx.save()
+      ctx.strokeStyle = p.ringColor
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.ellipse(bx, by, p.radius * 2.2, p.radius * 0.5, -0.3, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.restore()
+    }
+
+    // Planet label
+    ctx.font = '9px -apple-system, sans-serif'
+    ctx.fillStyle = `rgba(200, 200, 220, 0.5)`
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'center'
+    ctx.fillText(p.name, bx, by + p.radius + 4)
   }
 
   // Caption
@@ -415,7 +438,7 @@ function frame(now: number) {
   ctx.fillStyle = '#3a3a5a'
   ctx.textBaseline = 'bottom'
   ctx.textAlign = 'center'
-  ctx.fillText('layoutNextLine() reflows text around orbiting stars — drag any star to rearrange the constellation', W / 2, H - 12)
+  ctx.fillText('layoutNextLine() reflows text around the solar system — drag any planet to disturb its orbit', W / 2, H - 12)
 
   requestAnimationFrame(frame)
 }
