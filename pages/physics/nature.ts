@@ -66,7 +66,6 @@ clouds.push(makeCloud(W * 0.7, 100, 60))
 const TREE_X = W * 0.72
 const TREE_GROUND_Y = H * 0.75
 const TRUNK_HEIGHT = 180
-const CANOPY_RADIUS = 80
 
 type Branch = {
   x: number; y: number
@@ -175,18 +174,41 @@ canvas.addEventListener('click', (e) => {
 // --- Text layout around obstacles ---
 type PositionedWord = { text: string; x: number; y: number; width: number }
 
+// Compute actual tree bounding box from branch tips
+let treeBBoxTop = TREE_GROUND_Y
+let treeBBoxLeft = TREE_X
+let treeBBoxRight = TREE_X
+function computeTreeBBox(branch: Branch) {
+  const endX = branch.x + Math.cos(branch.angle) * branch.length
+  const endY = branch.y + Math.sin(branch.angle) * branch.length
+  if (endY < treeBBoxTop) treeBBoxTop = endY
+  if (endX < treeBBoxLeft) treeBBoxLeft = endX
+  if (endX > treeBBoxRight) treeBBoxRight = endX
+  for (const child of branch.children) computeTreeBBox(child)
+}
+computeTreeBBox(tree)
+treeBBoxTop -= 20
+treeBBoxLeft -= 15
+treeBBoxRight += 15
+
 function getTreeBounds(lineY: number): { left: number; right: number } | null {
   const bandMid = lineY + lineHeight / 2
-  // Trunk
-  if (bandMid > TREE_GROUND_Y - TRUNK_HEIGHT && bandMid < TREE_GROUND_Y) {
+  if (bandMid < treeBBoxTop || bandMid > TREE_GROUND_Y) return null
+  // Trunk zone (narrow)
+  const trunkTop = TREE_GROUND_Y - 60
+  if (bandMid > trunkTop) {
     return { left: TREE_X - 12, right: TREE_X + 12 }
   }
-  // Canopy (elliptical)
-  const canopyCenterY = TREE_GROUND_Y - TRUNK_HEIGHT - CANOPY_RADIUS * 0.4
+  // Canopy zone (elliptical, based on actual branch extents)
+  const canopyCenterY = (treeBBoxTop + trunkTop) / 2
+  const canopyHalfH = (trunkTop - treeBBoxTop) / 2
   const dy = bandMid - canopyCenterY
-  if (Math.abs(dy) < CANOPY_RADIUS) {
-    const halfWidth = Math.sqrt(CANOPY_RADIUS * CANOPY_RADIUS - dy * dy) * 1.1
-    return { left: TREE_X - halfWidth, right: TREE_X + halfWidth }
+  const t = dy / canopyHalfH
+  if (Math.abs(t) < 1) {
+    const canopyHalfW = (treeBBoxRight - treeBBoxLeft) / 2
+    const halfWidth = canopyHalfW * Math.sqrt(1 - t * t)
+    const cx = (treeBBoxLeft + treeBBoxRight) / 2
+    return { left: cx - halfWidth, right: cx + halfWidth }
   }
   return null
 }
