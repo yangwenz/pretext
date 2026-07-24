@@ -233,21 +233,21 @@ function flipperCollide(flipperX: number, flipperAngle: number, prevAngle: numbe
     const surfaceVx = -contactDy / (contactDist || 1) * surfaceSpeed * (isLeft ? 1 : -1)
     const surfaceVy = contactDx / (contactDist || 1) * surfaceSpeed * (isLeft ? 1 : -1)
 
-    // Reflect ball velocity and add flipper impulse
+    // Reflect ball velocity along normal (gentle)
     const relVn = ball.velocity.x * normX + ball.velocity.y * normY
     if (relVn < 0) {
-      ball.velocity.x -= 2 * relVn * normX
-      ball.velocity.y -= 2 * relVn * normY
+      ball.velocity.x -= 1.5 * relVn * normX
+      ball.velocity.y -= 1.5 * relVn * normY
     }
 
-    // Add flipper surface velocity as impulse
-    const impulseStrength = Math.abs(angularVel) > 0.5 ? 1.8 : 0.3
+    // Add flipper surface velocity as impulse (toned down)
+    const impulseStrength = Math.abs(angularVel) > 0.5 ? 0.5 : 0.1
     ball.velocity.x += surfaceVx * impulseStrength
     ball.velocity.y += surfaceVy * impulseStrength
 
-    // Minimum upward kick when flipper is actively swinging
+    // Gentle upward kick when flipper is actively swinging
     if (Math.abs(angularVel) > 2) {
-      ball.velocity.y = Math.min(ball.velocity.y, -200)
+      ball.velocity.y = Math.min(ball.velocity.y, -150)
     }
 
     ball.sleeping = false
