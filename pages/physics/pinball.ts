@@ -77,7 +77,7 @@ for (const def of bumperDefs) {
 }
 
 // --- Flippers ---
-const FLIPPER_LENGTH = 60
+const FLIPPER_LENGTH = 90
 const FLIPPER_WIDTH = 12
 const FLIPPER_Y = H - 80
 const LEFT_FLIPPER_X = W * 0.3
