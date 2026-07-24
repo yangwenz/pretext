@@ -68,28 +68,29 @@ function buildTower() {
   const groundY = H - 20
   const gap = blockSize + 2
   const pillarGap = gap * 2.5
+  const bottom = groundY - blockSize / 2
 
   // --- Bottom tier: two pillars with a plank ---
   // Left pillar
   const lx = towerX - pillarGap / 2
-  addBlock(lx, groundY - gap, 'P', blockColors[0]!)
-  addBlock(lx, groundY - gap * 2, 'H', blockColors[0]!)
-  addBlock(lx, groundY - gap * 3, 'Y', blockColors[0]!)
+  addBlock(lx, bottom, 'P', blockColors[0]!)
+  addBlock(lx, bottom - gap, 'H', blockColors[0]!)
+  addBlock(lx, bottom - gap * 2, 'Y', blockColors[0]!)
 
   // Right pillar
   const rx = towerX + pillarGap / 2
-  addBlock(rx, groundY - gap, 'S', blockColors[1]!)
-  addBlock(rx, groundY - gap * 2, 'I', blockColors[1]!)
-  addBlock(rx, groundY - gap * 3, 'C', blockColors[1]!)
+  addBlock(rx, bottom, 'S', blockColors[1]!)
+  addBlock(rx, bottom - gap, 'I', blockColors[1]!)
+  addBlock(rx, bottom - gap * 2, 'C', blockColors[1]!)
 
   // Platform spanning both pillars
-  const platY = groundY - gap * 3 - gap * 0.7
+  const platY = bottom - gap * 3 + blockSize / 2 + 5
   addBlock(towerX - gap, platY, '—', '#636e72', blockSize, 10)
   addBlock(towerX, platY, '—', '#636e72', blockSize, 10)
   addBlock(towerX + gap, platY, '—', '#636e72', blockSize, 10)
 
   // --- Top tier: smaller structure on the platform ---
-  const topBase = platY - gap * 0.8
+  const topBase = platY - 5 - blockSize / 2
   addBlock(towerX - gap * 0.6, topBase, 'T', blockColors[2]!)
   addBlock(towerX + gap * 0.6, topBase, 'E', blockColors[2]!)
 
