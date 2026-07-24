@@ -41,7 +41,7 @@ let ball: Body = createBall()
 
 function createBall(): Body {
   return createBody(world, '●', bodyFont, {
-    position: { x: W - 50, y: H - 120 },
+    position: { x: W / 2, y: H - 130 },
     mass: 1,
     width: BALL_RADIUS * 2,
     height: BALL_RADIUS * 2,
@@ -105,8 +105,8 @@ canvas.addEventListener('click', launchBall)
 
 function launchBall() {
   if (!launched || ball.position.y > H + 50) {
-    ball.position.x = W - 50
-    ball.position.y = H - 120
+    ball.position.x = W / 2
+    ball.position.y = H - 130
     ball.velocity.x = (Math.random() - 0.5) * 50
     ball.velocity.y = -700 - Math.random() * 200
     ball.sleeping = false
