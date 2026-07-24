@@ -114,4 +114,21 @@ function resolveCollision(a: Body, b: Body): void {
   a.velocity.y += ny * impulse * invMassA
   b.velocity.x -= nx * impulse * invMassB
   b.velocity.y -= ny * impulse * invMassB
+
+  // Tangential friction impulse
+  const tx = relVelX - relVelAlongNormal * nx
+  const ty = relVelY - relVelAlongNormal * ny
+  const tLen = Math.sqrt(tx * tx + ty * ty)
+  if (tLen > 1e-8) {
+    const tnx = tx / tLen
+    const tny = ty / tLen
+    const frictionImpulse = -tLen / invMassSum
+    const mu = (a.friction + b.friction) / 2
+    const maxFriction = mu * Math.abs(impulse)
+    const clamped = Math.max(-maxFriction, Math.min(maxFriction, frictionImpulse))
+    a.velocity.x += tnx * clamped * invMassA
+    a.velocity.y += tny * clamped * invMassA
+    b.velocity.x -= tnx * clamped * invMassB
+    b.velocity.y -= tny * clamped * invMassB
+  }
 }
