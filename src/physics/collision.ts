@@ -75,6 +75,10 @@ function resolveCollision(a: Body, b: Body): void {
 
   if (overlapX <= 0 || overlapY <= 0) return
 
+  // Wake sleeping bodies on contact
+  if (a.sleeping && !b.sleeping) { a.sleeping = false; a.sleepTimer = 0 }
+  if (b.sleeping && !a.sleeping) { b.sleeping = false; b.sleepTimer = 0 }
+
   const invMassA = a.mass === Infinity ? 0 : 1 / a.mass
   const invMassB = b.mass === Infinity ? 0 : 1 / b.mass
   const invMassSum = invMassA + invMassB

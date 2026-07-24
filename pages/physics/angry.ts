@@ -57,7 +57,8 @@ function addBlock(x: number, y: number, char: string, color: string, w = blockSi
     restitution: 0.3,
     friction: 0.15,
     collisionGroup: 0,
-    sleeping: true,
+    sleeping: false,
+    sleepTimer: 85,
   })
   blocks.push({ body, char, color, hp: 1 })
   return body
@@ -66,38 +67,36 @@ function addBlock(x: number, y: number, char: string, color: string, w = blockSi
 function buildTower() {
   const towerX = W - 200
   const groundY = H - 20
-  const gap = blockSize + 2
-  const pillarGap = gap * 2.5
+  const pillarGap = blockSize * 2.5
+  const platH = 10
   const bottom = groundY - blockSize / 2
 
-  // --- Bottom tier: two pillars with a plank ---
-  // Left pillar
+  // --- Bottom tier: two pillars ---
   const lx = towerX - pillarGap / 2
   addBlock(lx, bottom, 'P', blockColors[0]!)
-  addBlock(lx, bottom - gap, 'H', blockColors[0]!)
-  addBlock(lx, bottom - gap * 2, 'Y', blockColors[0]!)
+  addBlock(lx, bottom - blockSize, 'H', blockColors[0]!)
+  addBlock(lx, bottom - blockSize * 2, 'Y', blockColors[0]!)
 
-  // Right pillar
   const rx = towerX + pillarGap / 2
   addBlock(rx, bottom, 'S', blockColors[1]!)
-  addBlock(rx, bottom - gap, 'I', blockColors[1]!)
-  addBlock(rx, bottom - gap * 2, 'C', blockColors[1]!)
+  addBlock(rx, bottom - blockSize, 'I', blockColors[1]!)
+  addBlock(rx, bottom - blockSize * 2, 'C', blockColors[1]!)
 
-  // Platform spanning both pillars
-  const platY = bottom - gap * 3 + blockSize / 2 + 5
-  addBlock(towerX - gap, platY, '—', '#636e72', blockSize, 10)
-  addBlock(towerX, platY, '—', '#636e72', blockSize, 10)
-  addBlock(towerX + gap, platY, '—', '#636e72', blockSize, 10)
+  // Platform resting on top of pillars
+  const pillarTopY = bottom - blockSize * 2 - blockSize / 2
+  const platY = pillarTopY - platH / 2
+  addBlock(towerX - blockSize, platY, '—', '#636e72', blockSize, platH)
+  addBlock(towerX, platY, '—', '#636e72', blockSize, platH)
+  addBlock(towerX + blockSize, platY, '—', '#636e72', blockSize, platH)
 
-  // --- Top tier: smaller structure on the platform ---
-  const topBase = platY - 5 - blockSize / 2
-  addBlock(towerX - gap * 0.6, topBase, 'T', blockColors[2]!)
-  addBlock(towerX + gap * 0.6, topBase, 'E', blockColors[2]!)
+  // --- Top tier resting on platform ---
+  const topBase = platY - platH / 2 - blockSize / 2
+  addBlock(towerX - blockSize * 0.6, topBase, 'T', blockColors[2]!)
+  addBlock(towerX + blockSize * 0.6, topBase, 'E', blockColors[2]!)
 
   // Top cap
-  const capY = topBase - gap
-  addBlock(towerX, capY, 'X', blockColors[3]!)
-  addBlock(towerX, capY - gap, 'T', blockColors[3]!)
+  addBlock(towerX, topBase - blockSize, 'X', blockColors[3]!)
+  addBlock(towerX, topBase - blockSize * 2, 'T', blockColors[3]!)
 }
 
 function loadBird() {
