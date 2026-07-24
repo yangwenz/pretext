@@ -14,15 +14,127 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Metallic glow from above */
+  .bg-effects {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-effects::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120%;
+    height: 80%;
+    background: radial-gradient(ellipse at center, rgba(108, 138, 255, 0.08) 0%, rgba(192, 192, 192, 0.04) 30%, transparent 70%);
+  }
+
+  /* Pendulum arc lines */
+  .arc-lines {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.06;
+  }
+  .arc-lines::before,
+  .arc-lines::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    border: 1px solid #c0c0c0;
+    border-radius: 0 0 50% 50%;
+    border-top: none;
+    transform-origin: top center;
+  }
+  .arc-lines::before {
+    transform: translateX(-50%) rotate(-15deg);
+  }
+  .arc-lines::after {
+    transform: translateX(-50%) rotate(15deg);
+  }
+  .arc-inner::before,
+  .arc-inner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 250px;
+    height: 250px;
+    border: 1px solid #6c8aff;
+    border-radius: 0 0 50% 50%;
+    border-top: none;
+    transform-origin: top center;
+  }
+  .arc-inner::before {
+    transform: translateX(-50%) rotate(-25deg);
+  }
+  .arc-inner::after {
+    transform: translateX(-50%) rotate(25deg);
+  }
+
+  /* Vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(5, 5, 10, 0.7) 100%);
+  }
+
+  /* Floating metallic glint particles */
+  .particle {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    animation: glint 4s ease-in-out infinite;
+  }
+  .particle:nth-child(1) { top: 15%; left: 20%; background: #c0c0c0; animation-delay: 0s; }
+  .particle:nth-child(2) { top: 25%; left: 75%; background: #6c8aff; animation-delay: 0.8s; }
+  .particle:nth-child(3) { top: 45%; left: 12%; background: #d0d0d0; animation-delay: 1.6s; }
+  .particle:nth-child(4) { top: 60%; left: 85%; background: #8aa0ff; animation-delay: 2.4s; }
+  .particle:nth-child(5) { top: 75%; left: 30%; background: #b0b0b0; animation-delay: 3.2s; }
+  .particle:nth-child(6) { top: 35%; left: 90%; background: #c0c0c0; animation-delay: 1.2s; }
+  .particle:nth-child(7) { top: 80%; left: 65%; background: #6c8aff; animation-delay: 2.0s; }
+  .particle:nth-child(8) { top: 10%; left: 55%; background: #e0e0e0; animation-delay: 0.4s; }
+
+  @keyframes glint {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #c0c0c0 50%, #6c8aff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -38,6 +150,8 @@
     cursor: grab;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
@@ -53,12 +167,15 @@
     font-weight: 500;
     opacity: 0.8;
     transition: opacity 0.2s;
+    z-index: 10;
   }
   a.back:hover { opacity: 1; }
   .controls {
     margin-top: 20px;
     display: flex;
     gap: 10px;
+    position: relative;
+    z-index: 2;
   }
   button {
     padding: 8px 18px;
@@ -78,6 +195,17 @@
 </style>
 </head>
 <body>
+<div class="bg-effects"></div>
+<div class="arc-lines"><div class="arc-inner"></div></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="particle"></div>
+<div class="vignette"></div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Newton's Cradle</h1>

@@ -14,15 +14,101 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Electric glow from center */
+  .bg-glow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle at center, rgba(0, 212, 255, 0.06) 0%, rgba(167, 139, 250, 0.04) 30%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Field lines - concentric arcs */
+  .field-lines {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(circle, transparent 18%, rgba(0, 212, 255, 0.03) 19%, transparent 20%),
+      radial-gradient(circle, transparent 30%, rgba(167, 139, 250, 0.025) 31%, transparent 32%),
+      radial-gradient(circle, transparent 44%, rgba(0, 212, 255, 0.02) 45%, transparent 46%),
+      radial-gradient(circle, transparent 60%, rgba(167, 139, 250, 0.02) 61%, transparent 62%),
+      radial-gradient(circle, transparent 78%, rgba(0, 212, 255, 0.015) 79%, transparent 80%);
+    animation: field-pulse 8s ease-in-out infinite;
+  }
+
+  @keyframes field-pulse {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
+  }
+
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Orbiting charged particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .particles .charge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: orbit linear infinite;
+  }
+  .particles .charge:nth-child(1) { background: rgba(0, 212, 255, 0.6); animation-duration: 12s; animation-delay: 0s; --radius: 180px; --start: 0deg; }
+  .particles .charge:nth-child(2) { background: rgba(167, 139, 250, 0.5); animation-duration: 16s; animation-delay: -3s; --radius: 250px; --start: 90deg; width: 3px; height: 3px; }
+  .particles .charge:nth-child(3) { background: rgba(0, 212, 255, 0.4); animation-duration: 20s; animation-delay: -7s; --radius: 320px; --start: 180deg; width: 2px; height: 2px; }
+  .particles .charge:nth-child(4) { background: rgba(167, 139, 250, 0.6); animation-duration: 14s; animation-delay: -5s; --radius: 200px; --start: 270deg; }
+  .particles .charge:nth-child(5) { background: rgba(0, 212, 255, 0.3); animation-duration: 22s; animation-delay: -10s; --radius: 380px; --start: 45deg; width: 3px; height: 3px; }
+  .particles .charge:nth-child(6) { background: rgba(167, 139, 250, 0.4); animation-duration: 18s; animation-delay: -8s; --radius: 280px; --start: 135deg; width: 2px; height: 2px; }
+  .particles .charge:nth-child(7) { background: rgba(0, 212, 255, 0.5); animation-duration: 15s; animation-delay: -2s; --radius: 150px; --start: 225deg; width: 3px; height: 3px; }
+  .particles .charge:nth-child(8) { background: rgba(167, 139, 250, 0.3); animation-duration: 25s; animation-delay: -12s; --radius: 420px; --start: 315deg; width: 2px; height: 2px; }
+
+  @keyframes orbit {
+    from { transform: rotate(var(--start)) translateX(var(--radius)) rotate(calc(-1 * var(--start))); }
+    to { transform: rotate(calc(var(--start) + 360deg)) translateX(var(--radius)) rotate(calc(-1 * (var(--start) + 360deg))); }
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 20%, #00d4ff 60%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -36,27 +122,38 @@
     background: #141420;
     border: 1px solid #1e1e2e;
     cursor: none;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 212, 255, 0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.06), 0 0 0 1px rgba(0, 212, 255, 0.12);
   }
   a.back {
     position: fixed;
     top: 18px;
     left: 18px;
-    color: #6c8aff;
+    color: #00d4ff;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     opacity: 0.8;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 10;
   }
-  a.back:hover { opacity: 1; }
+  a.back:hover { opacity: 1; transform: translateX(-3px); }
 </style>
 </head>
 <body>
+<div class="bg-glow"></div>
+<div class="field-lines"></div>
+<div class="vignette"></div>
+<div class="particles">
+  <div class="charge"></div><div class="charge"></div><div class="charge"></div>
+  <div class="charge"></div><div class="charge"></div><div class="charge"></div>
+  <div class="charge"></div><div class="charge"></div>
+</div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Magnetic Cursor</h1>

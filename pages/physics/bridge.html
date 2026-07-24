@@ -14,15 +14,97 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* Warm amber glow from below */
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 100%, rgba(212,165,116,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 30% at 50% 95%, rgba(180,120,60,0.08) 0%, transparent 60%);
+  }
+
+  /* Horizontal cable lines */
+  .bg-cables {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-cables::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 80px,
+      rgba(212,165,116,0.03) 80px,
+      rgba(212,165,116,0.03) 81px
+    );
+    mask-image: linear-gradient(to right, transparent 5%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.6) 70%, transparent 95%);
+    -webkit-mask-image: linear-gradient(to right, transparent 5%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.6) 70%, transparent 95%);
+  }
+
+  /* Floating dust motes */
+  .dust-motes {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .mote {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(212,165,116,0.5);
+    animation: drift-mote linear infinite;
+  }
+  .mote:nth-child(1) { left: 15%; top: 20%; animation-duration: 18s; animation-delay: 0s; width: 2px; height: 2px; opacity: 0.6; }
+  .mote:nth-child(2) { left: 70%; top: 40%; animation-duration: 22s; animation-delay: -4s; width: 3px; height: 3px; opacity: 0.4; }
+  .mote:nth-child(3) { left: 40%; top: 60%; animation-duration: 15s; animation-delay: -8s; width: 2px; height: 2px; opacity: 0.7; }
+  .mote:nth-child(4) { left: 85%; top: 30%; animation-duration: 20s; animation-delay: -2s; width: 2px; height: 2px; opacity: 0.5; }
+  .mote:nth-child(5) { left: 25%; top: 75%; animation-duration: 25s; animation-delay: -12s; width: 3px; height: 3px; opacity: 0.3; }
+  .mote:nth-child(6) { left: 55%; top: 15%; animation-duration: 19s; animation-delay: -6s; width: 2px; height: 2px; opacity: 0.5; }
+
+  @keyframes drift-mote {
+    0% { transform: translate(0, 0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    50% { transform: translate(30px, -40px) scale(1.2); }
+    90% { opacity: 1; }
+    100% { transform: translate(-20px, -80px) scale(0.8); opacity: 0; }
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #f5f0e8, #d4a574, #c8956e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -34,30 +116,48 @@
     display: block;
     border-radius: 16px;
     background: #141420;
-    border: 1px solid #1e1e2e;
+    border: 1px solid rgba(212,165,116,0.15);
     cursor: grab;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(212,165,116,0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(212,165,116,0.08);
   }
   canvas:active { cursor: grabbing; }
   a.back {
     position: fixed;
     top: 18px;
     left: 18px;
-    color: #6c8aff;
+    color: #d4a574;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     opacity: 0.8;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s, letter-spacing 0.2s;
+    z-index: 20;
   }
-  a.back:hover { opacity: 1; }
+  a.back:hover {
+    opacity: 1;
+    transform: translateX(-3px);
+    letter-spacing: 0.02em;
+  }
 </style>
 </head>
 <body>
+<div class="vignette"></div>
+<div class="bg-glow"></div>
+<div class="bg-cables"></div>
+<div class="dust-motes">
+  <div class="mote"></div>
+  <div class="mote"></div>
+  <div class="mote"></div>
+  <div class="mote"></div>
+  <div class="mote"></div>
+  <div class="mote"></div>
+</div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Rope Bridge</h1>

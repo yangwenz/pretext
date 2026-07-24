@@ -14,15 +14,90 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Teal/blue glow from center */
+  .bg-effects {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-effects::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 500px;
+    background: radial-gradient(ellipse at center, rgba(72, 219, 251, 0.06) 0%, rgba(108, 138, 255, 0.04) 40%, transparent 70%);
+  }
+
+  /* Flowing text-line streaks */
+  .flow-lines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .flow-line {
+    position: absolute;
+    height: 1px;
+    border-radius: 1px;
+    opacity: 0;
+    animation: flow-streak 6s ease-in-out infinite;
+  }
+  .flow-line:nth-child(1) { top: 18%; left: -10%; width: 25%; background: linear-gradient(90deg, transparent, rgba(108, 138, 255, 0.3), transparent); animation-delay: 0s; }
+  .flow-line:nth-child(2) { top: 28%; left: -5%; width: 35%; background: linear-gradient(90deg, transparent, rgba(72, 219, 251, 0.25), transparent); animation-delay: 1.0s; }
+  .flow-line:nth-child(3) { top: 42%; left: -15%; width: 20%; background: linear-gradient(90deg, transparent, rgba(108, 138, 255, 0.2), transparent); animation-delay: 2.0s; }
+  .flow-line:nth-child(4) { top: 56%; left: -8%; width: 30%; background: linear-gradient(90deg, transparent, rgba(72, 219, 251, 0.3), transparent); animation-delay: 3.0s; }
+  .flow-line:nth-child(5) { top: 68%; left: -12%; width: 22%; background: linear-gradient(90deg, transparent, rgba(108, 138, 255, 0.25), transparent); animation-delay: 4.0s; }
+  .flow-line:nth-child(6) { top: 80%; left: -6%; width: 28%; background: linear-gradient(90deg, transparent, rgba(72, 219, 251, 0.2), transparent); animation-delay: 5.0s; }
+
+  @keyframes flow-streak {
+    0% { opacity: 0; transform: translateX(0); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(calc(100vw + 100%)); }
+  }
+
+  /* Layout grid dots */
+  .grid-dots {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: radial-gradient(circle, rgba(108, 138, 255, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 20px 20px;
+  }
+
+  /* Vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(5, 5, 10, 0.7) 100%);
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #6c8aff 0%, #48dbfb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -38,6 +113,8 @@
     cursor: pointer;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
@@ -52,6 +129,7 @@
     font-weight: 500;
     opacity: 0.8;
     transition: opacity 0.2s;
+    z-index: 10;
   }
   a.back:hover { opacity: 1; }
   .controls {
@@ -59,6 +137,8 @@
     display: flex;
     gap: 14px;
     align-items: center;
+    position: relative;
+    z-index: 2;
   }
   button {
     padding: 8px 18px;
@@ -99,6 +179,17 @@
 </style>
 </head>
 <body>
+<div class="bg-effects"></div>
+<div class="grid-dots"></div>
+<div class="flow-lines">
+  <div class="flow-line"></div>
+  <div class="flow-line"></div>
+  <div class="flow-line"></div>
+  <div class="flow-line"></div>
+  <div class="flow-line"></div>
+  <div class="flow-line"></div>
+</div>
+<div class="vignette"></div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Live Reflow</h1>

@@ -14,10 +14,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
@@ -42,6 +45,8 @@
     cursor: pointer;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(255, 107, 107, 0.06);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 80px rgba(255, 107, 107, 0.12);
@@ -56,11 +61,170 @@
     font-weight: 500;
     opacity: 0.8;
     transition: opacity 0.2s;
+    z-index: 10;
   }
   a.back:hover { opacity: 1; }
+
+  /* Vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(10,5,16,0.6) 65%, rgba(10,5,16,0.9) 100%);
+  }
+
+  /* Warm atmospheric glows */
+  .warm-glow {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
+  }
+  .warm-glow-1 {
+    top: 30%;
+    left: 20%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,107,107,0.06);
+    animation: glow-pulse 8s ease-in-out infinite;
+  }
+  .warm-glow-2 {
+    top: 50%;
+    right: 15%;
+    width: 250px;
+    height: 250px;
+    background: rgba(254,202,87,0.05);
+    animation: glow-pulse 8s ease-in-out infinite;
+    animation-delay: -3s;
+  }
+  .warm-glow-3 {
+    bottom: 20%;
+    left: 40%;
+    width: 350px;
+    height: 200px;
+    background: rgba(255,159,243,0.05);
+    animation: glow-pulse 8s ease-in-out infinite;
+    animation-delay: -6s;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  /* Large soft blobs */
+  .lava-blob {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(40px);
+    opacity: 0.15;
+  }
+  .lava-blob-1 {
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255,107,107,0.6), transparent 70%);
+    animation: blob-rise 12s ease-in-out infinite;
+    left: 25%;
+  }
+  .lava-blob-2 {
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(254,202,87,0.6), transparent 70%);
+    animation: blob-rise 10s ease-in-out infinite;
+    animation-delay: -4s;
+    left: 60%;
+  }
+  .lava-blob-3 {
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,159,243,0.5), transparent 70%);
+    animation: blob-rise 14s ease-in-out infinite;
+    animation-delay: -8s;
+    left: 75%;
+  }
+  .lava-blob-4 {
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(255,140,80,0.6), transparent 70%);
+    animation: blob-rise 11s ease-in-out infinite;
+    animation-delay: -2s;
+    left: 40%;
+  }
+  @keyframes blob-rise {
+    0%, 100% { top: 70%; transform: scale(1) translateX(0); }
+    25% { transform: scale(1.2) translateX(20px); }
+    50% { top: 20%; transform: scale(0.9) translateX(-10px); }
+    75% { transform: scale(1.1) translateX(-20px); }
+  }
+
+  /* Ember particles */
+  .ember {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    animation: ember-float 7s ease-in-out infinite;
+  }
+  .ember:nth-child(1) { left: 15%; background: #ff6b6b; animation-delay: 0s; bottom: 10%; }
+  .ember:nth-child(2) { left: 30%; background: #feca57; animation-delay: 1s; bottom: 15%; }
+  .ember:nth-child(3) { left: 50%; background: #ff9ff3; animation-delay: 2s; bottom: 5%; }
+  .ember:nth-child(4) { left: 65%; background: #ff6b6b; animation-delay: 3s; bottom: 12%; }
+  .ember:nth-child(5) { left: 80%; background: #feca57; animation-delay: 4s; bottom: 8%; }
+  .ember:nth-child(6) { left: 25%; background: #ff9ff3; animation-delay: 5s; bottom: 18%; }
+  .ember:nth-child(7) { left: 70%; background: #ff6b6b; animation-delay: 6s; bottom: 3%; }
+  .ember:nth-child(8) { left: 45%; background: #feca57; animation-delay: 1.5s; bottom: 20%; }
+  .ember:nth-child(9) { left: 55%; background: #ff9ff3; animation-delay: 3.5s; bottom: 7%; }
+  .ember:nth-child(10) { left: 85%; background: #ff6b6b; animation-delay: 5.5s; bottom: 14%; }
+  @keyframes ember-float {
+    0% { opacity: 0; transform: translateY(0) scale(1); }
+    20% { opacity: 0.8; }
+    80% { opacity: 0.4; }
+    100% { opacity: 0; transform: translateY(-400px) scale(0.3); }
+  }
+
+  /* Heat shimmer gradient */
+  .heat-shimmer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(to top, rgba(255,80,60,0.03), transparent);
+    animation: shimmer-shift 6s ease-in-out infinite;
+  }
+  @keyframes shimmer-shift {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
 </style>
 </head>
 <body>
+<div class="heat-shimmer"></div>
+<div class="warm-glow warm-glow-1"></div>
+<div class="warm-glow warm-glow-2"></div>
+<div class="warm-glow warm-glow-3"></div>
+<div class="lava-blob lava-blob-1"></div>
+<div class="lava-blob lava-blob-2"></div>
+<div class="lava-blob lava-blob-3"></div>
+<div class="lava-blob lava-blob-4"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="ember"></div>
+<div class="vignette"></div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Lava Lamp</h1>

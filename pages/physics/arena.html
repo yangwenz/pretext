@@ -14,15 +14,92 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+  }
+
+  /* Dramatic glow from below */
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 90% 40% at 50% 105%, rgba(255,71,87,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 30% at 50% 100%, rgba(254,202,87,0.06) 0%, transparent 50%);
+  }
+
+  /* Hexagonal grid pattern */
+  .bg-hex {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    background-image:
+      linear-gradient(30deg, rgba(255,71,87,0.5) 12%, transparent 12.5%, transparent 87%, rgba(255,71,87,0.5) 87.5%, rgba(255,71,87,0.5)),
+      linear-gradient(150deg, rgba(255,71,87,0.5) 12%, transparent 12.5%, transparent 87%, rgba(255,71,87,0.5) 87.5%, rgba(255,71,87,0.5)),
+      linear-gradient(30deg, rgba(255,71,87,0.5) 12%, transparent 12.5%, transparent 87%, rgba(255,71,87,0.5) 87.5%, rgba(255,71,87,0.5)),
+      linear-gradient(150deg, rgba(255,71,87,0.5) 12%, transparent 12.5%, transparent 87%, rgba(255,71,87,0.5) 87.5%, rgba(255,71,87,0.5)),
+      linear-gradient(60deg, rgba(254,202,87,0.4) 25%, transparent 25.5%, transparent 75%, rgba(254,202,87,0.4) 75%, rgba(254,202,87,0.4)),
+      linear-gradient(60deg, rgba(254,202,87,0.4) 25%, transparent 25.5%, transparent 75%, rgba(254,202,87,0.4) 75%, rgba(254,202,87,0.4));
+    background-size: 80px 140px;
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+  }
+
+  /* Sparks drifting upward */
+  .sparks {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .spark {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    animation: spark-rise linear infinite;
+  }
+  .spark:nth-child(1) { left: 20%; bottom: -5%; background: #ff4757; animation-duration: 6s; animation-delay: 0s; }
+  .spark:nth-child(2) { left: 45%; bottom: -5%; background: #feca57; animation-duration: 5s; animation-delay: -1s; width: 3px; height: 3px; }
+  .spark:nth-child(3) { left: 70%; bottom: -5%; background: #ff6b81; animation-duration: 7s; animation-delay: -3s; }
+  .spark:nth-child(4) { left: 35%; bottom: -5%; background: #feca57; animation-duration: 5.5s; animation-delay: -2s; }
+  .spark:nth-child(5) { left: 80%; bottom: -5%; background: #ff4757; animation-duration: 6.5s; animation-delay: -4s; width: 3px; height: 3px; }
+  .spark:nth-child(6) { left: 55%; bottom: -5%; background: #feca57; animation-duration: 4.5s; animation-delay: -1.5s; }
+  .spark:nth-child(7) { left: 10%; bottom: -5%; background: #ff6b81; animation-duration: 7.5s; animation-delay: -5s; }
+  .spark:nth-child(8) { left: 90%; bottom: -5%; background: #feca57; animation-duration: 5s; animation-delay: -2.5s; }
+
+  @keyframes spark-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    5% { opacity: 1; }
+    50% { transform: translateY(-50vh) scale(0.8) translateX(10px); opacity: 0.8; }
+    100% { transform: translateY(-110vh) scale(0.3) translateX(-5px); opacity: 0; }
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff, #ff4757, #feca57);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -34,29 +111,49 @@
     display: block;
     border-radius: 16px;
     background: #141420;
-    border: 1px solid #1e1e2e;
+    border: 1px solid rgba(255,71,87,0.15);
     cursor: crosshair;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(255,71,87,0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255,71,87,0.08), 0 0 80px rgba(254,202,87,0.04);
   }
   a.back {
     position: fixed;
     top: 18px;
     left: 18px;
-    color: #6c8aff;
+    color: #ff6b81;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     opacity: 0.8;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s, letter-spacing 0.2s;
+    z-index: 20;
   }
-  a.back:hover { opacity: 1; }
+  a.back:hover {
+    opacity: 1;
+    transform: translateX(-3px);
+    letter-spacing: 0.02em;
+  }
 </style>
 </head>
 <body>
+<div class="vignette"></div>
+<div class="bg-glow"></div>
+<div class="bg-hex"></div>
+<div class="sparks">
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+  <div class="spark"></div>
+</div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Word Arena</h1>

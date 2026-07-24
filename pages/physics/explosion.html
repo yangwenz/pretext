@@ -14,15 +14,93 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
+
+  /* Warm radial glow from center */
+  .bg-glow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle at center, rgba(255, 107, 53, 0.07) 0%, rgba(255, 60, 20, 0.03) 30%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Radial burst lines */
+  .burst-lines {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    background:
+      repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 107, 53, 0.8) 0.5deg, transparent 1deg, transparent 10deg);
+  }
+
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Spark particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .particles .spark {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    animation: drift ease-in-out infinite;
+  }
+  .particles .spark:nth-child(1) { left: 12%; top: 20%; background: rgba(255, 107, 53, 0.5); animation-duration: 6s; animation-delay: 0s; }
+  .particles .spark:nth-child(2) { left: 80%; top: 30%; background: rgba(255, 200, 50, 0.4); animation-duration: 8s; animation-delay: -1s; width: 2px; height: 2px; }
+  .particles .spark:nth-child(3) { left: 30%; top: 70%; background: rgba(255, 80, 30, 0.5); animation-duration: 7s; animation-delay: -3s; }
+  .particles .spark:nth-child(4) { left: 70%; top: 65%; background: rgba(255, 160, 40, 0.4); animation-duration: 9s; animation-delay: -2s; width: 2px; height: 2px; }
+  .particles .spark:nth-child(5) { left: 50%; top: 15%; background: rgba(255, 107, 53, 0.3); animation-duration: 10s; animation-delay: -5s; width: 4px; height: 4px; }
+  .particles .spark:nth-child(6) { left: 20%; top: 45%; background: rgba(255, 200, 50, 0.5); animation-duration: 7s; animation-delay: -4s; }
+  .particles .spark:nth-child(7) { left: 88%; top: 55%; background: rgba(255, 80, 30, 0.4); animation-duration: 11s; animation-delay: -6s; width: 2px; height: 2px; }
+  .particles .spark:nth-child(8) { left: 40%; top: 85%; background: rgba(255, 160, 40, 0.5); animation-duration: 8s; animation-delay: -3s; }
+  .particles .spark:nth-child(9) { left: 60%; top: 40%; background: rgba(255, 107, 53, 0.3); animation-duration: 12s; animation-delay: -7s; width: 2px; height: 2px; }
+  .particles .spark:nth-child(10) { left: 5%; top: 80%; background: rgba(255, 200, 50, 0.4); animation-duration: 9s; animation-delay: -1s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    25% { transform: translate(15px, -10px) scale(1.2); opacity: 0.7; }
+    50% { transform: translate(-5px, -20px) scale(0.8); opacity: 0.5; }
+    75% { transform: translate(-15px, -5px) scale(1.1); opacity: 0.6; }
+  }
+
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 20%, #ff6b35 60%, #ff3020 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hint {
     color: #8a8690;
@@ -36,27 +114,39 @@
     background: #141420;
     border: 1px solid #1e1e2e;
     cursor: crosshair;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(108, 138, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 107, 53, 0.05);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 138, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 107, 53, 0.06), 0 0 0 1px rgba(255, 107, 53, 0.12);
   }
   a.back {
     position: fixed;
     top: 18px;
     left: 18px;
-    color: #6c8aff;
+    color: #ff6b35;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     opacity: 0.8;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 10;
   }
-  a.back:hover { opacity: 1; }
+  a.back:hover { opacity: 1; transform: translateX(-3px); }
 </style>
 </head>
 <body>
+<div class="bg-glow"></div>
+<div class="burst-lines"></div>
+<div class="vignette"></div>
+<div class="particles">
+  <div class="spark"></div><div class="spark"></div><div class="spark"></div>
+  <div class="spark"></div><div class="spark"></div><div class="spark"></div>
+  <div class="spark"></div><div class="spark"></div><div class="spark"></div>
+  <div class="spark"></div>
+</div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Shatter</h1>

@@ -14,10 +14,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
@@ -42,6 +45,8 @@
     cursor: pointer;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(70, 130, 180, 0.06);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 80px rgba(70, 130, 180, 0.12);
@@ -56,11 +61,190 @@
     font-weight: 500;
     opacity: 0.8;
     transition: opacity 0.2s;
+    z-index: 10;
   }
   a.back:hover { opacity: 1; }
+
+  /* Sky-to-ground gradient atmosphere */
+  .sky-gradient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(135,206,235,0.03) 0%,
+      rgba(70,130,180,0.02) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(46,139,87,0.02) 80%,
+      rgba(34,100,60,0.03) 100%
+    );
+  }
+
+  /* Vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(5,10,18,0.6) 70%, rgba(5,10,18,0.9) 100%);
+  }
+
+  /* Sun glow from above */
+  .sun-glow {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    width: 500px;
+    height: 300px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(255,220,130,0.06) 0%, rgba(135,206,235,0.03) 50%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ground reflection */
+  .ground-glow {
+    position: fixed;
+    bottom: -50px;
+    left: 50%;
+    width: 600px;
+    height: 200px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(46,139,87,0.06) 0%, rgba(34,100,60,0.03) 50%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Cloud-like shapes drifting */
+  .cloud {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(30px);
+    opacity: 0.08;
+    background: rgba(200,220,240,0.6);
+    animation: cloud-drift 40s linear infinite;
+  }
+  .cloud-1 {
+    top: 12%;
+    width: 200px;
+    height: 60px;
+    animation-duration: 45s;
+    left: -200px;
+  }
+  .cloud-2 {
+    top: 22%;
+    width: 160px;
+    height: 45px;
+    animation-duration: 55s;
+    animation-delay: -15s;
+    left: -160px;
+  }
+  .cloud-3 {
+    top: 8%;
+    width: 240px;
+    height: 50px;
+    animation-duration: 50s;
+    animation-delay: -30s;
+    left: -240px;
+  }
+  @keyframes cloud-drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 300px)); }
+  }
+
+  /* Floating leaf shapes */
+  .leaf {
+    position: fixed;
+    width: 8px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    animation: leaf-fall 12s ease-in-out infinite;
+  }
+  .leaf::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: rgba(46,139,87,0.5);
+    border-radius: 0 50% 50% 50%;
+    transform: rotate(45deg);
+  }
+  .leaf:nth-child(1) { left: 10%; animation-delay: 0s; }
+  .leaf:nth-child(2) { left: 25%; animation-delay: 2s; }
+  .leaf:nth-child(3) { left: 40%; animation-delay: 4s; }
+  .leaf:nth-child(4) { left: 55%; animation-delay: 6s; }
+  .leaf:nth-child(5) { left: 70%; animation-delay: 8s; }
+  .leaf:nth-child(6) { left: 85%; animation-delay: 10s; }
+  .leaf:nth-child(7) { left: 35%; animation-delay: 1s; }
+  .leaf:nth-child(8) { left: 60%; animation-delay: 3.5s; }
+  .leaf:nth-child(2)::after, .leaf:nth-child(5)::after, .leaf:nth-child(7)::after {
+    background: rgba(100,160,90,0.4);
+  }
+  .leaf:nth-child(3)::after, .leaf:nth-child(6)::after {
+    background: rgba(70,130,100,0.4);
+  }
+  @keyframes leaf-fall {
+    0% { top: -5%; opacity: 0; transform: rotate(0deg) translateX(0); }
+    10% { opacity: 0.6; }
+    50% { transform: rotate(180deg) translateX(30px); }
+    90% { opacity: 0.4; }
+    100% { top: 100%; opacity: 0; transform: rotate(360deg) translateX(-20px); }
+  }
+
+  /* Nature ambient particles (fireflies) */
+  .firefly {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(200,230,150,0.6);
+    pointer-events: none;
+    z-index: 0;
+    animation: firefly-glow 5s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(200,230,150,0.3);
+  }
+  .firefly:nth-child(1) { top: 40%; left: 15%; animation-delay: 0s; }
+  .firefly:nth-child(2) { top: 55%; left: 80%; animation-delay: 1.2s; }
+  .firefly:nth-child(3) { top: 70%; left: 35%; animation-delay: 2.4s; }
+  .firefly:nth-child(4) { top: 30%; left: 65%; animation-delay: 3.6s; }
+  .firefly:nth-child(5) { top: 65%; left: 50%; animation-delay: 4.8s; }
+  @keyframes firefly-glow {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    30% { opacity: 0.8; transform: translate(5px, -8px); }
+    50% { opacity: 0.4; transform: translate(-3px, -12px); }
+    70% { opacity: 0.7; transform: translate(8px, -5px); }
+  }
 </style>
 </head>
 <body>
+<div class="sky-gradient"></div>
+<div class="sun-glow"></div>
+<div class="ground-glow"></div>
+<div class="cloud cloud-1"></div>
+<div class="cloud cloud-2"></div>
+<div class="cloud cloud-3"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="leaf"></div>
+<div class="firefly"></div>
+<div class="firefly"></div>
+<div class="firefly"></div>
+<div class="firefly"></div>
+<div class="firefly"></div>
+<div class="vignette"></div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Nature</h1>

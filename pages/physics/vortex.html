@@ -14,10 +14,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
   }
   .header {
     padding: 32px 24px 20px;
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   h1 {
     font-size: 28px;
@@ -42,6 +45,8 @@
     cursor: pointer;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(123, 47, 247, 0.08);
     transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
   }
   canvas:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 80px rgba(123, 47, 247, 0.15);
@@ -56,11 +61,140 @@
     font-weight: 500;
     opacity: 0.8;
     transition: opacity 0.2s;
+    z-index: 10;
   }
   a.back:hover { opacity: 1; }
+
+  /* Vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(6,6,16,0.7) 65%, rgba(6,6,16,0.95) 100%);
+  }
+
+  /* Rotating spiral background */
+  .spiral-bg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 800px;
+    height: 800px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(123,47,247,0.03) 30deg,
+      transparent 60deg,
+      rgba(199,125,255,0.02) 90deg,
+      transparent 120deg,
+      rgba(123,47,247,0.03) 150deg,
+      transparent 180deg,
+      rgba(199,125,255,0.02) 210deg,
+      transparent 240deg,
+      rgba(123,47,247,0.03) 270deg,
+      transparent 300deg,
+      rgba(199,125,255,0.02) 330deg,
+      transparent 360deg
+    );
+    animation: spiral-rotate 30s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes spiral-rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* Atmospheric glow */
+  .glow-center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(123,47,247,0.08) 0%, rgba(199,125,255,0.04) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Energy radial streaks */
+  .streak {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    animation: streak-flash 5s ease-in-out infinite;
+  }
+  .streak::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(199,125,255,0.4), transparent);
+    border-radius: 1px;
+  }
+  .streak:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-200px); animation-delay: 0s; }
+  .streak:nth-child(2) { transform: translate(-50%, -50%) rotate(45deg) translateY(-180px); animation-delay: 0.6s; }
+  .streak:nth-child(3) { transform: translate(-50%, -50%) rotate(90deg) translateY(-220px); animation-delay: 1.2s; }
+  .streak:nth-child(4) { transform: translate(-50%, -50%) rotate(135deg) translateY(-190px); animation-delay: 1.8s; }
+  .streak:nth-child(5) { transform: translate(-50%, -50%) rotate(180deg) translateY(-210px); animation-delay: 2.4s; }
+  .streak:nth-child(6) { transform: translate(-50%, -50%) rotate(225deg) translateY(-185px); animation-delay: 3.0s; }
+  .streak:nth-child(7) { transform: translate(-50%, -50%) rotate(270deg) translateY(-200px); animation-delay: 3.6s; }
+  .streak:nth-child(8) { transform: translate(-50%, -50%) rotate(315deg) translateY(-195px); animation-delay: 4.2s; }
+  @keyframes streak-flash {
+    0%, 70%, 100% { opacity: 0; }
+    35% { opacity: 0.6; }
+  }
+
+  /* Spiraling particles */
+  .spiral-particle {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: #c77dff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    animation: orbit-out 8s linear infinite;
+  }
+  .spiral-particle:nth-child(1) { top: 50%; left: 50%; animation-delay: 0s; }
+  .spiral-particle:nth-child(2) { top: 50%; left: 50%; animation-delay: 1.6s; }
+  .spiral-particle:nth-child(3) { top: 50%; left: 50%; animation-delay: 3.2s; }
+  .spiral-particle:nth-child(4) { top: 50%; left: 50%; animation-delay: 4.8s; }
+  .spiral-particle:nth-child(5) { top: 50%; left: 50%; animation-delay: 6.4s; }
+  @keyframes orbit-out {
+    0% { opacity: 0.7; transform: rotate(0deg) translateX(20px); }
+    100% { opacity: 0; transform: rotate(720deg) translateX(250px); }
+  }
 </style>
 </head>
 <body>
+<div class="spiral-bg"></div>
+<div class="glow-center"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="streak"></div>
+<div class="spiral-particle"></div>
+<div class="spiral-particle"></div>
+<div class="spiral-particle"></div>
+<div class="spiral-particle"></div>
+<div class="spiral-particle"></div>
+<div class="vignette"></div>
 <a class="back" href="/physics">&larr; All demos</a>
 <div class="header">
   <h1>Vortex</h1>
