@@ -12,7 +12,7 @@ npm install @chenglou/pretext
 
 ## Demos
 
-Clone the repo, run `bun install`, then `bun start`, and open `/demos/index` in your browser. On Windows, use `bun run start:windows`.
+Clone the repo, run `bun install`, then `bun start`, and open `/demos/index` in your browser. Physics demos are at `/physics/index`. On Windows, use `bun run start:windows`.
 Alternatively, see them live at [chenglou.me/pretext](https://chenglou.me/pretext/). Some more at [somnai-dreams.github.io/pretext-demos](https://somnai-dreams.github.io/pretext-demos/)
 
 ## API
@@ -224,6 +224,68 @@ Notes:
 - If a soft hyphen wins the break, materialized line text includes the visible trailing `-`.
 - `measureNaturalWidth()` returns the widest forced line. Hard breaks still count.
 - `prepare()` and `prepareWithSegments()` do horizontal-only work. `lineHeight` stays a layout-time input.
+
+### 3. Animate text with physics
+
+The physics sub-package turns characters into rigid bodies with real forces, collisions, and constraints. Import from `@chenglou/pretext/physics`:
+
+```ts
+import { createWorld, createBody, createConnection, step, render } from '@chenglou/pretext/physics'
+
+const world = createWorld({ gravity: { x: 0, y: 980 }, bounds: { x: 0, y: 0, width: 800, height: 600 } })
+
+// Each character is a body
+createBody(world, 'H', '24px Inter', { position: { x: 100, y: 100 }, width: 16, height: 24 })
+createBody(world, 'i', '24px Inter', { position: { x: 116, y: 100 }, width: 10, height: 24 })
+
+// Connect them with a spring so they stay together
+createConnection(world, { type: 'spring', a: 0, b: 1, stiffness: 300, damping: 10, restLength: 13 })
+
+function loop() {
+  step(world, 1 / 60)
+  ctx.clearRect(0, 0, 800, 600)
+  render(ctx, world)
+  requestAnimationFrame(loop)
+}
+loop()
+```
+
+The bridge helper converts pretext-laid-out text directly into a physics formation:
+
+```ts
+import { createWorld, step, render } from '@chenglou/pretext/physics'
+import { createTextFormation, updateRestPositions } from '@chenglou/pretext/physics'
+
+const world = createWorld({ gravity: { x: 0, y: 400 } })
+const formation = createTextFormation(world, 'Hello world!', '20px Inter', 300, 26, {
+  mass: 1,
+  connectionType: 'spring', // or 'rigid' | 'weld'
+})
+
+// On resize, update rest positions so characters fly to the new layout
+updateRestPositions(world, formation, newWidth)
+```
+
+Interactions let you add forces at runtime:
+
+```ts
+import { step, type Interaction } from '@chenglou/pretext/physics'
+
+const interactions: Interaction[] = [
+  { type: 'impulse', position: { x: 400, y: 300 }, radius: 200, strength: 500 },
+  { type: 'wind', direction: { x: 1, y: 0 }, strength: 50 },
+  { type: 'attractor', position: { x: 400, y: 300 }, strength: 5000, falloff: 'quadratic' },
+  { type: 'repulsor', position: cursor, strength: 800, radius: 100 },
+  { type: 'drag', bodyId: 0, target: cursor, stiffness: 200 },
+]
+step(world, 1 / 60, interactions)
+```
+
+Connection types: `spring` (soft), `rigid` (fixed distance), `rope` (max distance), `hinge` (rotation around anchor), `weld` (locked angle), `slider` (movement along axis). All connections support optional `breakForce` for destructible joints.
+
+Bodies support `mass: Infinity` for static/kinematic objects, collision groups/masks for selective collision, and automatic sleep for performance.
+
+Clone the repo, run `bun start`, and open `/physics/index` for 20 interactive demos — gravity drops, explosions, magnetic cursors, rope bridges, orbital text, live reflow, water simulation, pinball, and more.
 
 ## Caveats
 
