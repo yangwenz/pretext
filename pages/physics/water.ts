@@ -24,7 +24,7 @@ const offsetY = 50
 
 const world = createWorld({
   gravity: { x: 0, y: 600 },
-  bounds: { x: 0, y: 0, width: W, height: H + 200 },
+  bounds: { x: -20, y: 0, width: W + 40, height: H - 10 },
   iterations: 3,
   damping: 0.98,
 })
@@ -63,7 +63,7 @@ type CharParticle = {
 const particles: CharParticle[] = []
 let nextReleaseIndex = 0
 let releaseTimer = 0
-const RELEASE_INTERVAL = 0.06
+const RELEASE_INTERVAL = 0.015
 
 for (let lineIdx = 0; lineIdx < layout.lines.length; lineIdx++) {
   const line = layout.lines[lineIdx]!
@@ -216,7 +216,8 @@ function frame(now: number) {
   }
 
   // Buoyancy and drag for submerged characters
-  for (const p of particles) {
+  for (let pi = 0; pi < particles.length; pi++) {
+    const p = particles[pi]!
     if (!p.released) continue
     const body = p.body
     const surfaceY = getWaveHeightAt(body.position.x)
@@ -226,8 +227,11 @@ function frame(now: number) {
       const depth = Math.min(1, (charBottom - surfaceY) / body.height)
       p.submerged = depth
 
-      // Buoyancy
-      const buoyancy = -world.config.gravity.y * body.mass * depth * 1.3
+      // Earlier chars (lower index) get weaker buoyancy so they sink deeper;
+      // later chars float on top
+      const orderRatio = pi / particles.length // 0 = first released, 1 = last
+      const buoyancyStrength = 1.2 + orderRatio * 0.6 // 1.2..1.8
+      const buoyancy = -world.config.gravity.y * body.mass * depth * buoyancyStrength
       body.force.y += buoyancy
 
       // Drag
@@ -260,12 +264,6 @@ function frame(now: number) {
     // Keep chars roughly on-screen horizontally
     if (body.position.x < 20) body.force.x += 50
     if (body.position.x > W - 20) body.force.x -= 50
-
-    // Prevent sinking too deep
-    if (body.position.y > H - 30) {
-      body.force.y -= 200
-      body.velocity.y *= 0.8
-    }
   }
 
   // Physics step
@@ -353,11 +351,13 @@ function frame(now: number) {
   ctx.restore()
 
   // --- Draw floating/submerged characters ---
+  // Sort: deeper chars drawn first (behind), surface chars on top
+  const releasedParticles = particles.filter(p => p.released && p.opacity > 0)
+  releasedParticles.sort((a, b) => b.body.position.y - a.body.position.y)
   ctx.font = font
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'center'
-  for (const p of particles) {
-    if (!p.released || p.opacity <= 0) continue
+  for (const p of releasedParticles) {
     const body = p.body
     const surfaceY = getWaveHeightAt(body.position.x)
 
