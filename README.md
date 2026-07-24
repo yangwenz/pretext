@@ -4,6 +4,8 @@ Pure JavaScript/TypeScript library for multiline text measurement & layout. Fast
 
 Pretext side-steps the need for DOM measurements (e.g. `getBoundingClientRect`, `offsetHeight`), which trigger layout reflow, one of the most expensive operations in the browser. It implements its own text measurement logic, using the browsers' own font engine as ground truth (very AI-friendly iteration method).
 
+> **Fork note:** This is a fork of the [original pretext](https://github.com/chenglou/pretext). The main addition is **`@chenglou/pretext/physics`** — a character-level 2D physics engine that turns laid-out text into rigid bodies with gravity, collisions, springs, and constraints. See [Use-case 3: Animate text with physics](#3-animate-text-with-physics) and the 20 interactive demos at `/physics/index`.
+
 ## Installation
 
 ```sh
