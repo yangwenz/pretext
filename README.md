@@ -4,7 +4,7 @@ Pure JavaScript/TypeScript library for multiline text measurement & layout. Fast
 
 Pretext side-steps the need for DOM measurements (e.g. `getBoundingClientRect`, `offsetHeight`), which trigger layout reflow, one of the most expensive operations in the browser. It implements its own text measurement logic, using the browsers' own font engine as ground truth (very AI-friendly iteration method).
 
-> **Fork note:** This is a fork of the [original pretext](https://github.com/chenglou/pretext). The main addition is **`@chenglou/pretext/physics`** — a character-level 2D physics engine that turns laid-out text into rigid bodies with gravity, collisions, springs, and constraints. See [Use-case 3: Animate text with physics](#3-animate-text-with-physics) and the 20 interactive demos at `/physics/index`.
+> **Fork note:** This is a fork of the [original pretext](https://github.com/chenglou/pretext). The main addition is **`@chenglou/pretext/physics`** — a character-level 2D physics engine that turns laid-out text into rigid bodies with gravity, collisions, springs, and constraints. See [Use-case 3: Animate text with physics](#3-animate-text-with-physics) and the 20 interactive demos at `/physics`.
 
 ## Installation
 
@@ -14,7 +14,7 @@ npm install @chenglou/pretext
 
 ## Demos
 
-Clone the repo, run `bun install`, then `bun start`, and open `/demos/index` in your browser. Physics demos are at `/physics/index`. On Windows, use `bun run start:windows`.
+Clone the repo, run `bun install`, then `bun start`, and open `/demos` in your browser. Physics demos are at `/physics`. On Windows, use `bun run start:windows`.
 Alternatively, see them live at [chenglou.me/pretext](https://chenglou.me/pretext/). Some more at [somnai-dreams.github.io/pretext-demos](https://somnai-dreams.github.io/pretext-demos/)
 
 ## API
@@ -287,7 +287,7 @@ Connection types: `spring` (soft), `rigid` (fixed distance), `rope` (max distanc
 
 Bodies support `mass: Infinity` for static/kinematic objects, collision groups/masks for selective collision, and automatic sleep for performance.
 
-Clone the repo, run `bun start`, and open `/physics/index` for 20 interactive demos — gravity drops, explosions, magnetic cursors, rope bridges, orbital text, live reflow, water simulation, pinball, and more.
+Clone the repo, run `bun start`, and open `/physics` for 20 interactive demos — gravity drops, explosions, magnetic cursors, rope bridges, orbital text, live reflow, water simulation, pinball, and more.
 
 ## Caveats
 
