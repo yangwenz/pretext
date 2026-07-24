@@ -19,7 +19,7 @@ const lineHeight = 22
 const marginX = 30
 const textStartY = 30
 
-const documentText = `Every arcade has its physics. The silver ball obeys gravity, rebounds off rubber, transfers momentum to bumpers that flash and ring. Between the chaos of trajectories, the playfield has a geography — ramps, lanes, targets, each one a destination the ball might reach if struck at just the right angle. The flippers are the only democracy in pinball: everything else is fate and geometry, but those two paddles belong to you. Press the buttons and you own a fraction of a second, a sliver of agency in a machine designed to take your money. The tilt sensor watches for desperation. The drain waits below, patient as gravity. But for one perfect shot — the ball climbing the left orbit, curving through the spinner, triggering the multiball — for that one moment, you are the architect of chaos, and the machine sings your score in lights.`
+const documentText = `Every arcade has its physics. The silver ball obeys gravity, rebounds off rubber, transfers momentum to bumpers that flash and ring. Between the chaos of trajectories, the playfield has a geography — ramps, lanes, targets, each one a destination the ball might reach if struck at just the right angle. The flippers are the only democracy in pinball: everything else is fate and geometry, but those two paddles belong to you. Press the buttons and you own a fraction of a second, a sliver of agency in a machine designed to take your money. The tilt sensor watches for desperation. The drain waits below, patient as gravity. But for one perfect shot — the ball climbing the left orbit, curving through the spinner, triggering the multiball — for that one moment, you are the architect of chaos, and the machine sings your score in lights. The first pinball machines had no flippers at all. Players could only nudge the cabinet, coaxing the ball sideways with body English and prayer. The addition of flippers in 1947 transformed pinball from gambling device to skill game, and saved it from prohibition. Every machine since has been a conversation between luck and control, between the designer who hid the secrets and the player who discovers them one quarter at a time. The greatest players read the geometry of the table like a language — they know which angles produce which results, which bumpers feed which lanes, which moments demand patience and which demand violence. They do not fight the physics; they collaborate with it. The ball is not an enemy to be defeated but a partner to be guided. And when the last ball drains and the match digits spin, there is always the same question: one more game?`
 
 const prepared = prepareWithSegments(documentText, bodyFont)
 const internalWidths: number[] = (prepared as any).widths
@@ -142,7 +142,7 @@ for (let i = 0; i < 5; i++) {
 }
 
 // --- Flippers ---
-const FLIPPER_LENGTH = 90
+const FLIPPER_LENGTH = 100
 const FLIPPER_WIDTH = 14
 const FLIPPER_Y = H - 100
 const LEFT_FLIPPER_X = W * 0.35
