@@ -95,7 +95,8 @@ const tree = buildTree(TREE_X, TREE_GROUND_Y, 85, -Math.PI / 2, 0)
 // --- Leaves (particles attached to branch tips) ---
 type Leaf = {
   x: number; y: number
-  homeX: number; homeY: number
+  tipIndex: number
+  offsetX: number; offsetY: number
   vx: number; vy: number
   angle: number; rotSpeed: number
   size: number; color: string
@@ -105,25 +106,27 @@ type Leaf = {
 const leaves: Leaf[] = []
 const leafColors = ['#2e8b57', '#3cb371', '#228b22', '#6b8e23', '#556b2f', '#8fbc8f', '#90ee90']
 
-function collectBranchTips(branch: Branch, tips: { x: number; y: number }[]) {
+function collectBranchTips(branch: Branch, tipsArr: { x: number; y: number }[]) {
   if (branch.children.length === 0) {
     const endX = branch.x + Math.cos(branch.angle) * branch.length
     const endY = branch.y + Math.sin(branch.angle) * branch.length
-    tips.push({ x: endX, y: endY })
+    tipsArr.push({ x: endX, y: endY })
   }
-  for (const child of branch.children) collectBranchTips(child, tips)
+  for (const child of branch.children) collectBranchTips(child, tipsArr)
 }
 
-const tips: { x: number; y: number }[] = []
+let tips: { x: number; y: number }[] = []
 collectBranchTips(tree, tips)
 
 for (let i = 0; i < 120; i++) {
-  const tip = tips[Math.floor(Math.random() * tips.length)]!
-  const ox = (Math.random() - 0.5) * 30
-  const oy = (Math.random() - 0.5) * 30
+  const tipIdx = Math.floor(Math.random() * tips.length)
+  const tip = tips[tipIdx]!
+  const ox = (Math.random() - 0.5) * 25
+  const oy = (Math.random() - 0.5) * 25
   leaves.push({
     x: tip.x + ox, y: tip.y + oy,
-    homeX: tip.x + ox, homeY: tip.y + oy,
+    tipIndex: tipIdx,
+    offsetX: ox, offsetY: oy,
     vx: 0, vy: 0,
     angle: Math.random() * Math.PI * 2,
     rotSpeed: (Math.random() - 0.5) * 3,
@@ -347,36 +350,41 @@ function frame(now: number) {
   }
   windBranch(tree, -Math.PI / 2)
 
+  // --- Recalculate branch tips after wind bending ---
+  tips = []
+  collectBranchTips(tree, tips)
+
   // --- Update leaves ---
   for (const leaf of leaves) {
     if (leaf.detached) {
-      leaf.vx += windStrength * 60 * elapsed
-      leaf.vy += 50 * elapsed // gravity
-      leaf.vx *= 0.99
-      leaf.vy *= 0.99
+      leaf.vx += windStrength * 80 * elapsed
+      leaf.vy += 60 * elapsed // gravity
+      leaf.vx *= 0.98
+      leaf.vy *= 0.98
       leaf.x += leaf.vx * elapsed
       leaf.y += leaf.vy * elapsed
-      leaf.angle += leaf.rotSpeed * elapsed
+      leaf.angle += leaf.rotSpeed * windStrength * 2 * elapsed
       leaf.life += elapsed
 
       // Reset if off-screen or in water
       if (leaf.x > W + 20 || leaf.y > POND_Y) {
         leaf.detached = false
-        const tip = tips[Math.floor(Math.random() * tips.length)]!
-        leaf.homeX = tip.x + (Math.random() - 0.5) * 30
-        leaf.homeY = tip.y + (Math.random() - 0.5) * 30
-        leaf.x = leaf.homeX
-        leaf.y = leaf.homeY
+        leaf.tipIndex = Math.floor(Math.random() * tips.length)
+        leaf.offsetX = (Math.random() - 0.5) * 25
+        leaf.offsetY = (Math.random() - 0.5) * 25
+        const tip = tips[leaf.tipIndex]!
+        leaf.x = tip.x + leaf.offsetX
+        leaf.y = tip.y + leaf.offsetY
         leaf.vx = 0
         leaf.vy = 0
         leaf.life = 0
       }
     } else {
-      // Sway with wind on the tree
-      const sway = windStrength * 4 * Math.sin(time * 2 + leaf.homeX * 0.05)
-      leaf.x = leaf.homeX + sway
-      leaf.y = leaf.homeY + Math.sin(time * 1.8 + leaf.homeY * 0.03) * 1.5
-      leaf.angle += windStrength * 0.5 * elapsed
+      // Follow the current branch tip position
+      const tip = tips[leaf.tipIndex % tips.length]!
+      leaf.x = tip.x + leaf.offsetX
+      leaf.y = tip.y + leaf.offsetY
+      leaf.angle += windStrength * 0.8 * elapsed
     }
   }
 
