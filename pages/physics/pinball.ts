@@ -184,47 +184,79 @@ function launchBall() {
 let score = 0
 
 // --- Flipper collision ---
-function flipperCollide(flipperX: number, flipperAngle: number, isLeft: boolean) {
-  const cosA = Math.cos(flipperAngle)
-  const sinA = Math.sin(flipperAngle)
-  const endX = flipperX + (isLeft ? 1 : -1) * cosA * FLIPPER_LENGTH
-  const endY = FLIPPER_Y + sinA * FLIPPER_LENGTH
+// Thickness for collision (larger than visual to prevent tunneling)
+const FLIPPER_COLLISION_THICKNESS = FLIPPER_WIDTH + BALL_RADIUS * 2
 
-  // Project ball onto flipper line segment
-  const dx = endX - flipperX
-  const dy = endY - FLIPPER_Y
-  const len = Math.sqrt(dx * dx + dy * dy)
-  const nx = dx / len
-  const ny = dy / len
+function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number): { dist: number; closestX: number; closestY: number } {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len2 = dx * dx + dy * dy
+  if (len2 === 0) return { dist: Math.sqrt((px - x1) ** 2 + (py - y1) ** 2), closestX: x1, closestY: y1 }
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2))
+  const closestX = x1 + t * dx
+  const closestY = y1 + t * dy
+  const dist = Math.sqrt((px - closestX) ** 2 + (py - closestY) ** 2)
+  return { dist, closestX, closestY }
+}
 
-  const bx = ball.position.x - flipperX
-  const by = ball.position.y - FLIPPER_Y
-  const proj = bx * nx + by * ny
-  const clampedProj = Math.max(0, Math.min(len, proj))
+function flipperEndpoint(flipperX: number, angle: number, isLeft: boolean): { x: number; y: number } {
+  const cosA = Math.cos(angle)
+  const sinA = Math.sin(angle)
+  return {
+    x: flipperX + (isLeft ? 1 : -1) * cosA * FLIPPER_LENGTH,
+    y: FLIPPER_Y + sinA * FLIPPER_LENGTH,
+  }
+}
 
-  const closestX = flipperX + nx * clampedProj
-  const closestY = FLIPPER_Y + ny * clampedProj
+function flipperCollide(flipperX: number, flipperAngle: number, prevAngle: number, isLeft: boolean) {
+  const end = flipperEndpoint(flipperX, flipperAngle, isLeft)
+  const { dist, closestX, closestY } = distToSegment(ball.position.x, ball.position.y, flipperX, FLIPPER_Y, end.x, end.y)
+  const collisionR = FLIPPER_COLLISION_THICKNESS / 2
 
-  const distX = ball.position.x - closestX
-  const distY = ball.position.y - closestY
-  const dist = Math.sqrt(distX * distX + distY * distY)
+  if (dist < collisionR) {
+    // Push ball out
+    const normX = (ball.position.x - closestX) / (dist || 1)
+    const normY = (ball.position.y - closestY) / (dist || 1)
+    const overlap = collisionR - dist
+    ball.position.x += normX * overlap * 1.1
+    ball.position.y += normY * overlap * 1.1
 
-  if (dist < BALL_RADIUS + FLIPPER_WIDTH / 2) {
-    // Push ball away
-    const overlap = BALL_RADIUS + FLIPPER_WIDTH / 2 - dist
-    const normX = distX / (dist || 1)
-    const normY = distY / (dist || 1)
-    ball.position.x += normX * overlap
-    ball.position.y += normY * overlap
+    // Angular velocity of the flipper at the contact point
+    const angularVel = (flipperAngle - prevAngle) / FIXED_DT
+    // Distance from pivot to contact point
+    const contactDx = closestX - flipperX
+    const contactDy = closestY - FLIPPER_Y
+    const contactDist = Math.sqrt(contactDx * contactDx + contactDy * contactDy)
 
-    // Flipper hit — boost if flipper is moving up
-    const flipperVel = (isLeft ? leftFlipperTarget - leftFlipperAngle : rightFlipperTarget - rightFlipperAngle) * 15
-    ball.velocity.x += normX * Math.abs(flipperVel) * 30
-    ball.velocity.y += normY * Math.abs(flipperVel) * 30 - Math.abs(flipperVel) * 20
+    // Flipper surface velocity at contact (perpendicular to radius)
+    const surfaceSpeed = angularVel * contactDist
+    const surfaceVx = -contactDy / (contactDist || 1) * surfaceSpeed * (isLeft ? 1 : -1)
+    const surfaceVy = contactDx / (contactDist || 1) * surfaceSpeed * (isLeft ? 1 : -1)
+
+    // Reflect ball velocity and add flipper impulse
+    const relVn = ball.velocity.x * normX + ball.velocity.y * normY
+    if (relVn < 0) {
+      ball.velocity.x -= 2 * relVn * normX
+      ball.velocity.y -= 2 * relVn * normY
+    }
+
+    // Add flipper surface velocity as impulse
+    const impulseStrength = Math.abs(angularVel) > 0.5 ? 1.8 : 0.3
+    ball.velocity.x += surfaceVx * impulseStrength
+    ball.velocity.y += surfaceVy * impulseStrength
+
+    // Minimum upward kick when flipper is actively swinging
+    if (Math.abs(angularVel) > 2) {
+      ball.velocity.y = Math.min(ball.velocity.y, -200)
+    }
+
     ball.sleeping = false
     ball.sleepTimer = 0
   }
 }
+
+let prevLeftFlipperAngle = leftFlipperAngle
+let prevRightFlipperAngle = rightFlipperAngle
 
 // --- Bumper collision ---
 function bumperCollisions() {
@@ -507,8 +539,10 @@ function frame(now: number) {
   }
 
   // Flipper collision
-  flipperCollide(LEFT_FLIPPER_X, leftFlipperAngle, true)
-  flipperCollide(RIGHT_FLIPPER_X, rightFlipperAngle, false)
+  flipperCollide(LEFT_FLIPPER_X, leftFlipperAngle, prevLeftFlipperAngle, true)
+  flipperCollide(RIGHT_FLIPPER_X, rightFlipperAngle, prevRightFlipperAngle, false)
+  prevLeftFlipperAngle = leftFlipperAngle
+  prevRightFlipperAngle = rightFlipperAngle
 
   // Bumper collision
   bumperCollisions()
