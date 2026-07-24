@@ -45,98 +45,58 @@ type Block = { body: Body; char: string; color: string; hp: number }
 let blocks: Block[] = []
 let score = 0
 
-const towerChars = [
-  ['P', 'H', 'Y'],
-  ['S', 'I', 'C'],
-  ['T', 'E', 'X'],
-  ['T', '!', '!'],
-]
 const blockColors = ['#01a3a4', '#00cec9', '#55efc4', '#81ecec']
-const blockSize = 28
+const blockSize = 26
+
+function addBlock(x: number, y: number, char: string, color: string, w = blockSize, h = blockSize) {
+  const body = createBody(world, char, blockFont, {
+    position: { x, y },
+    mass: 1,
+    width: w,
+    height: h,
+    restitution: 0.3,
+    friction: 0.15,
+    collisionGroup: 0,
+    sleeping: true,
+  })
+  blocks.push({ body, char, color, hp: 1 })
+  return body
+}
 
 function buildTower() {
   const towerX = W - 200
   const groundY = H - 20
+  const gap = blockSize + 2
+  const pillarGap = gap * 2.5
 
-  for (let row = 0; row < towerChars.length; row++) {
-    const chars = towerChars[row]!
-    const rowY = groundY - (row + 1) * (blockSize + 2)
-    const rowColor = blockColors[row % blockColors.length]!
+  // --- Bottom tier: two pillars with a plank ---
+  // Left pillar
+  const lx = towerX - pillarGap / 2
+  addBlock(lx, groundY - gap, 'P', blockColors[0]!)
+  addBlock(lx, groundY - gap * 2, 'H', blockColors[0]!)
+  addBlock(lx, groundY - gap * 3, 'Y', blockColors[0]!)
 
-    for (let col = 0; col < chars.length; col++) {
-      const char = chars[col]!
-      const x = towerX + col * (blockSize + 3) - ((chars.length - 1) * (blockSize + 3)) / 2
+  // Right pillar
+  const rx = towerX + pillarGap / 2
+  addBlock(rx, groundY - gap, 'S', blockColors[1]!)
+  addBlock(rx, groundY - gap * 2, 'I', blockColors[1]!)
+  addBlock(rx, groundY - gap * 3, 'C', blockColors[1]!)
 
-      const body = createBody(world, char, blockFont, {
-        position: { x, y: rowY },
-        mass: 1,
-        width: blockSize,
-        height: blockSize,
-        restitution: 0.3,
-        friction: 0.4,
-        collisionGroup: 0,
-      })
+  // Platform spanning both pillars
+  const platY = groundY - gap * 3 - gap * 0.7
+  addBlock(towerX - gap, platY, '—', '#636e72', blockSize, 10)
+  addBlock(towerX, platY, '—', '#636e72', blockSize, 10)
+  addBlock(towerX + gap, platY, '—', '#636e72', blockSize, 10)
 
-      blocks.push({ body, char, color: rowColor, hp: 1 })
+  // --- Top tier: smaller structure on the platform ---
+  const topBase = platY - gap * 0.8
+  addBlock(towerX - gap * 0.6, topBase, 'T', blockColors[2]!)
+  addBlock(towerX + gap * 0.6, topBase, 'E', blockColors[2]!)
 
-      // Connect adjacent blocks in same row
-      if (col > 0) {
-        const prevBlock = blocks[blocks.length - 2]!
-        createConnection(world, {
-          type: 'rigid',
-          a: prevBlock.body.id,
-          b: body.id,
-          length: blockSize + 3,
-          breakForce: 3,
-        })
-      }
-    }
-
-    // Connect to row below (vertical)
-    if (row > 0) {
-      const prevRowStart = blocks.length - chars.length - towerChars[row - 1]!.length
-      const curRowStart = blocks.length - chars.length
-      const prevChars = towerChars[row - 1]!
-      const connectCount = Math.min(chars.length, prevChars.length)
-      for (let c = 0; c < connectCount; c++) {
-        createConnection(world, {
-          type: 'rigid',
-          a: blocks[prevRowStart + c]!.body.id,
-          b: blocks[curRowStart + c]!.body.id,
-          length: blockSize + 2,
-          breakForce: 2,
-        })
-      }
-    }
-  }
-
-  // Add some horizontal planks
-  const plankChars = ['—', '—', '—', '—', '—']
-  const plankY = groundY - towerChars.length * (blockSize + 2) - 4
-  const plankStartX = towerX - (plankChars.length * 20) / 2
-
-  for (let i = 0; i < plankChars.length; i++) {
-    const body = createBody(world, '—', blockFont, {
-      position: { x: plankStartX + i * 20, y: plankY },
-      mass: 1,
-      width: 18,
-      height: 8,
-      restitution: 0.1,
-      friction: 0.8,
-      collisionGroup: 0,
-    })
-    blocks.push({ body, char: '—', color: '#636e72', hp: 1 })
-
-    if (i > 0) {
-      createConnection(world, {
-        type: 'rigid',
-        a: blocks[blocks.length - 2]!.body.id,
-        b: body.id,
-        length: 20,
-        breakForce: 1.5,
-      })
-    }
-  }
+  // Top cap
+  const capY = topBase - gap
+  addBlock(towerX, capY, 'X', blockColors[3]!)
+  addBlock(towerX, capY - gap, 'T', blockColors[3]!)
 }
 
 function loadBird() {
@@ -150,7 +110,7 @@ function loadBird() {
     width: w + 8,
     height: 26,
     restitution: 0.5,
-    friction: 0.3,
+    friction: 0.15,
     collisionGroup: 0,
   })
   // Keep it static until launched
@@ -357,11 +317,13 @@ function frame(now: number) {
     ctx.rotate(b.angle)
 
     // Block background
+    const bw = b.width
+    const bh = b.height
     ctx.fillStyle = block.color + '44'
     ctx.strokeStyle = block.color + '88'
     ctx.lineWidth = 1.5
     ctx.beginPath()
-    ctx.roundRect(-blockSize / 2, -blockSize / 2, blockSize, blockSize, 3)
+    ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 3)
     ctx.fill()
     ctx.stroke()
 
