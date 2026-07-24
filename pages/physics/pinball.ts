@@ -178,6 +178,27 @@ function launchBall() {
   launched = true
 }
 
+// --- Spark particles ---
+type Spark = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number }
+const sparks: Spark[] = []
+
+function emitSparks(x: number, y: number, count: number, color: string, speed: number) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const spd = speed * (0.4 + Math.random() * 0.8)
+    sparks.push({
+      x,
+      y,
+      vx: Math.cos(angle) * spd + (ball.velocity.x || 0) * 0.1,
+      vy: Math.sin(angle) * spd + (ball.velocity.y || 0) * 0.1,
+      life: 0,
+      maxLife: 0.3 + Math.random() * 0.4,
+      color,
+      size: 1.5 + Math.random() * 2,
+    })
+  }
+}
+
 // --- Score ---
 let score = 0
 
@@ -246,6 +267,7 @@ function flipperCollide(flipperX: number, flipperAngle: number, prevAngle: numbe
     // Gentle upward kick when flipper is actively swinging
     if (Math.abs(angularVel) > 2) {
       ball.velocity.y = Math.min(ball.velocity.y, -150)
+      emitSparks(closestX, closestY, 6, '#ffffff', 180)
     }
 
     ball.sleeping = false
@@ -274,6 +296,7 @@ function bumperCollisions() {
       ball.sleeping = false
       ball.sleepTimer = 0
       bumper.flashTime = time
+      emitSparks(ball.position.x, ball.position.y, 8, bumper.color, 250)
       score += 100
     }
   }
@@ -296,6 +319,7 @@ function pegCollisions() {
       ball.sleeping = false
       ball.sleepTimer = 0
       peg.flashTime = time
+      emitSparks(peg.x, peg.y, 4, '#aaccff', 150)
       score += 10
     }
   }
@@ -335,6 +359,7 @@ function slingshotCollisions() {
       ball.sleeping = false
       ball.sleepTimer = 0
       sl.flashTime = time
+      emitSparks(closestX, closestY, 6, '#ffcc33', 200)
       score += 50
     }
   }
@@ -555,6 +580,18 @@ function frame(now: number) {
     steps++
   }
 
+  // Update sparks
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]!
+    s.x += s.vx * elapsed
+    s.y += s.vy * elapsed
+    s.vy += 400 * elapsed // gravity on sparks
+    s.life += elapsed
+    if (s.life > s.maxLife) {
+      sparks.splice(i, 1)
+    }
+  }
+
   // Reset ball if it falls off
   if (ball.position.y > H + 50) {
     launched = false
@@ -575,6 +612,26 @@ function frame(now: number) {
   ctx.textBaseline = 'top'
   ctx.textAlign = 'left'
   for (const w of words) {
+    if (launched) {
+      const dx = (w.x + w.width / 2) - ball.position.x
+      const dy = (w.y + lineHeight / 2) - ball.position.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const proximity = Math.max(0, 1 - dist / 50)
+      if (proximity > 0.01) {
+        // Glow and shift color near ball
+        const r = Math.round(144 + proximity * 111)
+        const g = Math.round(138 + proximity * 80)
+        const b = Math.round(132 + proximity * 123)
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+        ctx.globalAlpha = 0.75 + proximity * 0.25
+        // Slight push offset away from ball
+        const pushX = (dx / (dist || 1)) * proximity * 3
+        const pushY = (dy / (dist || 1)) * proximity * 3
+        ctx.fillText(w.text, w.x + pushX, w.y + pushY)
+        ctx.globalAlpha = 1
+        continue
+      }
+    }
     ctx.fillStyle = '#908a84'
     ctx.globalAlpha = 0.75
     ctx.fillText(w.text, w.x, w.y)
@@ -707,6 +764,21 @@ function frame(now: number) {
     ctx.arc(ball.position.x, ball.position.y, BALL_RADIUS, 0, Math.PI * 2)
     ctx.fill()
   }
+
+  // --- Draw sparks ---
+  ctx.save()
+  ctx.globalCompositeOperation = 'screen'
+  for (const s of sparks) {
+    const t = s.life / s.maxLife
+    const alpha = 1 - t * t
+    const size = s.size * (1 - t * 0.5)
+    ctx.fillStyle = s.color
+    ctx.globalAlpha = alpha
+    ctx.beginPath()
+    ctx.arc(s.x, s.y, size, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.restore()
 
   // --- Score ---
   ctx.font = 'bold 16px -apple-system, sans-serif'
