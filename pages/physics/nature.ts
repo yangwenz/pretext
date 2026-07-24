@@ -65,7 +65,7 @@ clouds.push(makeCloud(W * 0.7, 100, 60))
 // --- Tree ---
 const TREE_X = W * 0.72
 const TREE_GROUND_Y = H * 0.75
-const TRUNK_HEIGHT = 180
+const TRUNK_HEIGHT = 260
 
 type Branch = {
   x: number; y: number
@@ -90,7 +90,7 @@ function buildTree(x: number, y: number, length: number, angle: number, depth: n
   return branch
 }
 
-const tree = buildTree(TREE_X, TREE_GROUND_Y, 60, -Math.PI / 2, 0)
+const tree = buildTree(TREE_X, TREE_GROUND_Y, 85, -Math.PI / 2, 0)
 
 // --- Leaves (particles attached to branch tips) ---
 type Leaf = {
